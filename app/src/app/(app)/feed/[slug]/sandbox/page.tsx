@@ -49,7 +49,7 @@ export default async function SandboxPage({
           {update.title}
         </h1>
 
-        <SandboxClient exercises={update.sandboxExercises} />
+        <SandboxClient exercises={update.sandboxExercises} slug={slug} />
       </div>
     </>
   );

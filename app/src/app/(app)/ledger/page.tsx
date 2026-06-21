@@ -32,18 +32,18 @@ export default function LedgerPage() {
         </div>
 
         {/* Preview of populated Ledger */}
-        <div className="card p-5 lg:p-7 mb-8 relative overflow-hidden">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <BookMarked className="h-4 w-4 text-ink-3" strokeWidth={1.6} />
-              <span className="text-[10.5px] font-mono tracking-[0.16em] uppercase text-ink-3 font-semibold">
-                Preview · how this will look
+        <div className="card p-4 lg:p-7 mb-8 relative overflow-hidden">
+          <div className="flex items-center justify-between gap-3 mb-4 lg:mb-5">
+            <div className="flex items-center gap-2 min-w-0">
+              <BookMarked className="h-4 w-4 text-ink-3 flex-shrink-0" strokeWidth={1.6} />
+              <span className="text-[10px] lg:text-[10.5px] font-mono tracking-[0.14em] uppercase text-ink-3 font-semibold truncate">
+                Preview
               </span>
             </div>
-            <span className="tag-soft">Sample data</span>
+            <span className="tag-soft flex-shrink-0">Sample</span>
           </div>
 
-          <div className="space-y-3 opacity-60 pointer-events-none">
+          <div className="space-y-2 lg:space-y-3 opacity-60 pointer-events-none">
             <PreviewRow date="14 Jun" title="Construct weights revised. Chemistry" score="92%" />
             <PreviewRow date="07 Jun" title="New AOI design checklist. Biology" score="88%" />
             <PreviewRow date="28 May" title="History & PE topic merge" score="79%" />
@@ -79,12 +79,12 @@ export default function LedgerPage() {
 function PreviewRow({ date, title, score }: { date: string; title: string; score: string }) {
   return (
     <div
-      className="flex items-baseline gap-4 pb-3"
+      className="flex items-baseline gap-2.5 lg:gap-4 pb-2.5 lg:pb-3"
       style={{ borderBottom: "0.5px solid var(--line)" }}
     >
-      <span className="font-mono text-[11.5px] text-ink-3 w-14 flex-shrink-0">{date}</span>
-      <span className="font-serif text-[15px] lg:text-[16px] text-ink flex-1 leading-[1.35]">{title}</span>
-      <span className="font-mono text-[11.5px] font-semibold flex-shrink-0" style={{ color: "var(--sage)" }}>{score}</span>
+      <span className="font-mono text-[11px] lg:text-[11.5px] text-ink-3 w-11 lg:w-14 flex-shrink-0">{date}</span>
+      <span className="font-serif text-[14px] lg:text-[16px] text-ink flex-1 leading-[1.35] min-w-0">{title}</span>
+      <span className="font-mono text-[11px] lg:text-[11.5px] font-semibold flex-shrink-0" style={{ color: "var(--sage)" }}>{score}</span>
     </div>
   );
 }
