@@ -63,7 +63,7 @@ export default function MePage() {
         </div>
 
         <p className="font-serif italic text-[13px] text-ink-3 text-center mt-7">
-          Sasa v0.4 · Live with AI · Built in Kampala
+          Sasa v0.5 · Live with AI thought-walk · Built in Kampala
         </p>
       </div>
     </>

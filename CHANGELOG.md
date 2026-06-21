@@ -22,9 +22,89 @@ Categories:
 *Work currently in progress lives here.*
 
 ### Next up
-- Founder sets up free Groq + Gemini keys (MT-010 + MT-011) so we can wire real Phase D AI grading
-- Then: build remaining Sandbox exercise UIs (rewrite, plan_opener, design_aoi, identify_construct)
-- Or further free polish: scroll-spy section labels, reading-progress bar
+- Founder pushes 4 changed files (see HANDOFF.md) and tests the new feedback UX live
+- Then: pick next direction. Options include the Ledger PDF (Phase E), scroll-spy in Brief, search across briefs, or formalize the Path D workflow
+
+---
+
+## [0.5.0] — 2026-06-21 — *Structured feedback (thought-walk + session summary)*
+
+> **Why:** Founder asked for AI feedback to feel like a thoughtful breakdown, not a paragraph. Wanted per-construct alignment chips, visual color hierarchy (traffic-light style), and a real session summary after the last exercise.
+
+### Changed — grading layer
+- `app/src/lib/grading.ts` — rewritten to return STRUCTURED JSON (not paragraphs):
+  - Per-exercise feedback: `{ youSaid, ncdcSays, theGap, tryThis, overallAlignment, perConstruct[] }`
+  - New `summarizeSession()` produces `{ greeting, strongAreas, growthAreas, mondayAction }`
+  - JSON validator with markdown fence stripping (in case model adds code fences)
+  - Voice rules enforced via forbidden-word check (rejects "wrong"/"incorrect"/"mistake")
+- `app/src/app/api/grade/route.ts` — accepts `mode: "exercise" | "summary"`. Exercise mode validates grades/response, summary mode validates alignment shape. Returns structured payloads.
+
+### Changed — Sandbox UI (the big visual change)
+- `app/src/components/sandbox/SandboxClient.tsx` rebuilt:
+  - **Per-exercise feedback** now renders as a structured card with sections:
+    - Alignment header strip (sage/peach/clay tint based on alignment)
+    - Per-construct chips grid (re-grade only) with traffic-light colors per construct
+    - NCDC citation block in a paper card with quote icon
+    - "Thought walk" of 3 rows: You said / The gap / Try this (Try this highlighted)
+  - **Session summary** (after last exercise) is now a real screen, not just a celebration:
+    - Gold pulse + check (kept)
+    - "Where you were strong" (sage tint)
+    - "Where to grow" (peach tint)
+    - "Try this on Monday" (cream with ink left-border, the action highlight)
+    - Loading state while it calls the AI summary endpoint
+    - Fallback summary generated client-side from collected alignment data if AI fails
+- `SandboxClient` now tracks `runResults[]` across exercises and passes them to the wrap-up screen
+
+### Architecture
+- Total AI calls per Sandbox: 3 grading calls + 1 summary call = 4 calls (fits well under Groq's 30/min limit)
+- Alignment vocabulary locked: `"strong" | "partial" | "weak"` (never `correct` / `wrong`)
+- All copy stays em-dash-free
+
+### Version
+- Profile page bumped to v0.5
+
+### Verified
+- pnpm build passes; 19 routes prerender; /api/grade still registered as dynamic
+
+---
+
+## [0.4.0] — 2026-06-21 — *Phase D: real Groq AI grading + all 5 exercise types*
+
+> **Why:** Founder is going live. We promised real AI grading in Phase D. This ships it, with all 5 Sandbox exercise types fully built.
+> **What:** New /api/grade endpoint backed by Groq Llama 3.3 70B. Re-grade gets its existing 4-construct UI; rewrite, plan_opener, design_aoi, and identify_construct each get a free-text textarea with type-specific placeholder copy. Graceful offline fallback so the teacher never sees an error. Simple in-memory rate limit (5/min per IP) prevents runaway costs.
+
+### Added — server
+- `app/src/lib/ai.ts` — provider-agnostic AI client. Groq by default. Swap to other providers via AI_PROVIDER env var.
+- `app/src/lib/grading.ts` — system prompt + few-shot voice rules + response validator. Cites NCDC descriptor first, max 4 sentences, forbidden words (wrong/incorrect/mistake) trigger fallback.
+- `app/src/lib/rate-limit.ts` — simple in-memory rate limiter, 5 grades/min/IP.
+- `app/src/app/api/grade/route.ts` — POST endpoint the Sandbox calls. Validates input, rate-limits, calls grading service, returns normalized response.
+- `app/scripts/check-ai.ts` — local verification utility. Run with pnpm exec tsx scripts/check-ai.ts to confirm the key works.
+
+### Changed — client
+- `app/src/components/sandbox/SandboxClient.tsx` — full rebuild. Now calls /api/grade with real submission data. Loading state with spinner. Error state for rate limits. Graceful fallback if API down. Supports all 5 exercise types (regrade = construct grid, others = textarea with type-specific placeholder).
+- `app/src/app/(app)/feed/[slug]/sandbox/page.tsx` — passes slug down to SandboxClient.
+- `app/tsconfig.json` — excludes `scripts/` from build-time type checking (those are runtime utilities).
+- `app/src/lib/content/loader.ts` — added explanatory comment about intentional path candidates.
+
+### Changed — version
+- `app/src/app/(app)/me/page.tsx` — version stamp bumped to v0.4.
+- `preview.html` — header updated to v0.4 and points to live URL.
+
+### Architecture decisions made
+- Default provider = Groq (free, no card). Fallback model paths exist via AI_PROVIDER env var.
+- Voice rules enforced in TWO places: system prompt (instructs AI) AND validator (rejects responses that violate). Belt and suspenders.
+- Free-text exercises (rewrite/plan_opener/design_aoi/identify_construct) all share one textarea UI. AI receives type-specific system prompt that knows what to evaluate.
+- Rate limit is in-memory (resets on cold start). Sufficient for v0. Upgrade to Upstash if traffic justifies.
+
+### Verified
+- pnpm build passes locally. /api/grade registered as dynamic route. All 19 static routes still prerender clean.
+
+### Manual task added
+- ⚠️ **MT-012** Founder must add `GROQ_API_KEY=gsk_...` in Vercel project Environment Variables (Production + Preview), then redeploy. Without this, the live site falls back to citation-first stand-in feedback (still works, but not real AI).
+
+---
+
+## [0.2.2] — 2026-06-20 — *Free tier, em dash purge, onboarding gate, completion celebration*
 
 ---
 

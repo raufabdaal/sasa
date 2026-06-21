@@ -1,121 +1,188 @@
 /**
  * Sandbox grading logic.
  *
- * Each exercise type gets its own system prompt that enforces the Sasa voice:
- *  1. Cite the relevant NCDC construct descriptor FIRST, in quotes
- *  2. Compare teacher's response gently
- *  3. Speak as a colleague, never a judge
- *  4. NEVER use "wrong" / "incorrect" / "mistake"
- *  5. Max 4 sentences
- *  6. End with one concrete nuance to consider
+ * Returns STRUCTURED feedback (not a paragraph) so the UI can render it as
+ * a thought-walk: "You said / NCDC says / The gap / Try this".
  *
- * If the AI call fails, we return a citation-first stand-in so the teacher
- * never sees an error in the middle of their flow.
+ * For re-grade exercises we also return per-construct alignment (strong,
+ * partial, weak) so the UI can show traffic-light chips.
+ *
+ * Two public entry points:
+ *  - gradeSubmission()  for one exercise (after Submit)
+ *  - summarizeSession() for the full Sandbox (after the last Submit)
+ *
+ * Voice rules (enforced in BOTH the system prompt AND a validator):
+ *  1. Cite the relevant NCDC construct descriptor verbatim
+ *  2. Speak as a colleague, never a judge
+ *  3. NEVER use "wrong", "incorrect", "mistake"
+ *  4. Each text field is short and human (no walls of text)
+ *
+ * If the AI fails or returns malformed JSON, we fall back to a calm,
+ * citation-first stand-in so the teacher never sees an error mid-flow.
  */
 
 import "server-only";
 import { complete, type AiMessage } from "./ai";
-import type { SandboxExercise, SandboxExerciseType, Construct } from "./content/types";
+import type { SandboxExercise, SandboxExerciseType } from "./content/types";
 
 export type Grade = "A" | "B" | "C" | "D" | "E";
 export type ConstructKey = "knowledge" | "skill" | "application" | "values";
+export type Alignment = "strong" | "partial" | "weak";
+
+// ─────────────────────────────────────────────────────────────
+// Public types
+// ─────────────────────────────────────────────────────────────
 
 export type GradeRequest = {
   exercise: SandboxExercise;
   updateTitle: string;
-  // For regrade type only:
-  grades?: Record<ConstructKey, Grade>;
-  // For free-text exercises:
-  response?: string;
+  grades?: Record<ConstructKey, Grade>;   // for re-grade
+  response?: string;                       // for free-text
 };
 
-export type GradeResult = {
-  feedback: string;
-  citationDescriptor: string; // the construct rubric descriptor we cited
+export type ConstructFeedback = {
+  construct: ConstructKey;
+  alignment: Alignment;
+  note: string;       // one short sentence
+};
+
+export type StructuredFeedback = {
+  // Always present
+  citationDescriptor: string;          // verbatim NCDC descriptor
+  citationConstruct: ConstructKey;     // which construct the citation is from
+  youSaid: string;                     // short paraphrase of teacher's submission
+  ncdcSays: string;                    // short paraphrase of the descriptor
+  theGap: string;                      // 1-2 sentences on the difference
+  tryThis: string;                     // ONE concrete next action
+
+  // Only for re-grade: per-construct alignment chips
+  perConstruct?: ConstructFeedback[];
+
+  // Meta
+  overallAlignment: Alignment;
   source: "ai" | "fallback";
-  ms?: number;
-  warning?: string; // present when we fell back
+};
+
+export type SessionSummaryRequest = {
+  updateTitle: string;
+  exerciseResults: Array<{
+    exerciseType: SandboxExerciseType;
+    overallAlignment: Alignment;
+    perConstruct?: ConstructFeedback[];
+  }>;
+};
+
+export type SessionSummary = {
+  greeting: string;        // "You're done." or similar (warm)
+  strongAreas: string;     // 1-2 sentences
+  growthAreas: string;     // 1-2 sentences
+  mondayAction: string;    // ONE concrete thing to try next teaching day
+  source: "ai" | "fallback";
 };
 
 // ─────────────────────────────────────────────────────────────
-// Public entry
+// Per-exercise grading
 // ─────────────────────────────────────────────────────────────
 
-export async function gradeSubmission(req: GradeRequest): Promise<GradeResult> {
-  const messages = buildPrompt(req);
-  const result = await complete(messages, { maxTokens: 280, temperature: 0.4 });
+export async function gradeSubmission(req: GradeRequest): Promise<StructuredFeedback> {
+  const messages = buildExercisePrompt(req);
+  const result = await complete(messages, { maxTokens: 500, temperature: 0.4 });
 
-  // Pick the descriptor most relevant to this exercise type for citation
-  // (Application descriptor is the most user-context-rich; fall back to others if missing.)
-  const citationDescriptor =
-    req.exercise.rubric.application.descriptor ||
-    req.exercise.rubric.knowledge.descriptor ||
-    "(no descriptor available)";
+  const citation = pickCitation(req);
 
-  if (result.ok && isWellFormed(result.text)) {
-    return {
-      feedback: result.text,
-      citationDescriptor,
-      source: "ai",
-      ms: result.ms,
-    };
+  if (result.ok) {
+    const parsed = parseJsonResponse(result.text);
+    if (parsed && validatePerExercise(parsed)) {
+      return enrichWithCitation(parsed, citation, "ai");
+    }
   }
 
-  // Graceful fallback. Teacher sees a calm citation-first stand-in.
-  return {
-    feedback: fallbackFeedback(req, citationDescriptor),
-    citationDescriptor,
-    source: "fallback",
-    warning: result.ok ? "AI response failed validation" : result.error,
-  };
+  // Graceful fallback
+  return fallbackPerExercise(req, citation);
 }
 
 // ─────────────────────────────────────────────────────────────
-// Prompts
+// Final session summary
 // ─────────────────────────────────────────────────────────────
 
-function buildPrompt(req: GradeRequest): AiMessage[] {
-  const { exercise } = req;
-  const systemPrompt = baseSystemPrompt(exercise.type);
-  const userPrompt = buildUserPrompt(req);
+export async function summarizeSession(req: SessionSummaryRequest): Promise<SessionSummary> {
+  const messages = buildSummaryPrompt(req);
+  const result = await complete(messages, { maxTokens: 400, temperature: 0.4 });
 
-  return [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
-  ];
+  if (result.ok) {
+    const parsed = parseJsonResponse(result.text);
+    if (parsed && validateSummary(parsed)) {
+      return {
+        greeting: clean(parsed.greeting),
+        strongAreas: clean(parsed.strongAreas),
+        growthAreas: clean(parsed.growthAreas),
+        mondayAction: clean(parsed.mondayAction),
+        source: "ai",
+      };
+    }
+  }
+
+  return fallbackSummary(req);
 }
+
+// ─────────────────────────────────────────────────────────────
+// Prompt construction
+// ─────────────────────────────────────────────────────────────
 
 const VOICE_RULES = `
 You are a senior NCDC curriculum specialist reviewing a Ugandan secondary-school teacher's submission in the Sasa app.
 
-Your job is to:
-1. ALWAYS cite the most relevant official construct descriptor first, in quotes, verbatim from the rubric provided.
-2. Then gently compare the teacher's response to that descriptor.
-3. Speak as a respected colleague, never as a judge.
-4. NEVER use the words "wrong", "incorrect", or "mistake".
-5. Keep the entire response to a maximum of 4 sentences.
-6. End with ONE concrete nuance for the teacher to consider next time.
+Your tone: warm, professional, Ugandan-English, no Americanisms, no exclamation marks, no emojis. The teacher is a colleague, not a student. Never use the words "wrong", "incorrect", or "mistake".
 
-Tone: warm, professional, Ugandan-English, no Americanisms, no exclamation marks, no emojis. The teacher is a colleague who is doing real work, not a student being judged.
+You will respond with VALID JSON ONLY. No markdown, no preamble, no code fences. Just the JSON object.
 `.trim();
 
-function baseSystemPrompt(type: SandboxExerciseType): string {
-  const typeContext: Record<SandboxExerciseType, string> = {
-    regrade: "The teacher applied an A-E grade across four constructs (Knowledge, Skill, Application, Values) to a real student response. Comment on whether their grading aligns with the construct descriptors.",
-    rewrite: "The teacher rewrote an old-curriculum question to fit the competency-based curriculum. Comment on whether their rewrite tests the constructs they claim to be testing.",
-    plan_opener: "The teacher planned a 5-minute lesson opener that should introduce a curriculum concept while assessing all four constructs. Comment on whether the plan would actually achieve that.",
-    design_aoi: "The teacher designed an Activity of Integration (AOI). Comment on whether it integrates the four constructs in a real-world Ugandan context.",
-    identify_construct: "The teacher identified which construct(s) a given question tests. Comment on whether their identification is well-reasoned against the rubric.",
-  };
-  return `${VOICE_RULES}\n\n${typeContext[type]}`;
-}
-
-function buildUserPrompt(req: GradeRequest): string {
-  const { exercise, updateTitle } = req;
+function buildExercisePrompt(req: GradeRequest): AiMessage[] {
+  const { exercise } = req;
   const rubric = exercise.rubric;
 
+  const isRegrade = exercise.type === "regrade";
+
+  const schemaInstruction = isRegrade
+    ? `
+Respond with this exact JSON shape:
+{
+  "youSaid":  "<one short sentence paraphrasing what the teacher's grades say overall>",
+  "ncdcSays": "<one short sentence paraphrasing the relevant rubric expectation>",
+  "theGap":   "<one or two sentences describing where alignment is strong and where there's a gap>",
+  "tryThis":  "<ONE concrete action the teacher can try next time, max one sentence>",
+  "overallAlignment": "strong" | "partial" | "weak",
+  "perConstruct": [
+    { "construct": "knowledge",   "alignment": "strong"|"partial"|"weak", "note": "<short sentence>" },
+    { "construct": "skill",       "alignment": "strong"|"partial"|"weak", "note": "<short sentence>" },
+    { "construct": "application", "alignment": "strong"|"partial"|"weak", "note": "<short sentence>" },
+    { "construct": "values",      "alignment": "strong"|"partial"|"weak", "note": "<short sentence>" }
+  ]
+}
+`.trim()
+    : `
+Respond with this exact JSON shape:
+{
+  "youSaid":  "<one short sentence paraphrasing what the teacher wrote>",
+  "ncdcSays": "<one short sentence paraphrasing the most relevant rubric expectation>",
+  "theGap":   "<one or two sentences describing where alignment is strong and where there's a gap>",
+  "tryThis":  "<ONE concrete action the teacher can try next time, max one sentence>",
+  "overallAlignment": "strong" | "partial" | "weak"
+}
+`.trim();
+
+  const typeContext: Record<SandboxExerciseType, string> = {
+    regrade: "The teacher applied A-E grades across the four constructs to a real student response.",
+    rewrite: "The teacher rewrote an old-curriculum question to fit the competency-based curriculum.",
+    plan_opener: "The teacher planned a 5-minute lesson opener.",
+    design_aoi: "The teacher designed an Activity of Integration.",
+    identify_construct: "The teacher identified which construct(s) a question tests.",
+  };
+
+  const systemPrompt = `${VOICE_RULES}\n\nContext for this exercise: ${typeContext[exercise.type]}\n\n${schemaInstruction}`;
+
   const rubricText = `
-RUBRIC (the official construct descriptors for this exercise):
+RUBRIC (verbatim from NCDC):
 - Knowledge (${rubric.knowledge.weight}%): "${rubric.knowledge.descriptor}"
 - Skill (${rubric.skill.weight}%): "${rubric.skill.descriptor}"
 - Application (${rubric.application.weight}%): "${rubric.application.descriptor}"
@@ -123,15 +190,14 @@ RUBRIC (the official construct descriptors for this exercise):
 `.trim();
 
   const exerciseText = `
-EXERCISE CONTEXT:
-- Update: "${updateTitle}"
-- Exercise type: ${exercise.type}
-- Prompt given to teacher: ${exercise.prompt.trim()}
-${exercise.reference ? `- Reference material shown to teacher: "${exercise.reference.trim()}"` : ""}
+EXERCISE:
+- Update: "${req.updateTitle}"
+- Prompt the teacher saw: ${exercise.prompt.trim()}
+${exercise.reference ? `- Reference material: "${exercise.reference.trim()}"` : ""}
 `.trim();
 
   let submissionText: string;
-  if (exercise.type === "regrade" && req.grades) {
+  if (isRegrade && req.grades) {
     submissionText = `
 TEACHER'S GRADES:
 - Knowledge: ${req.grades.knowledge}
@@ -143,35 +209,206 @@ TEACHER'S GRADES:
     submissionText = `TEACHER'S RESPONSE:\n"${(req.response ?? "").trim() || "(empty submission)"}"`;
   }
 
-  return [exerciseText, rubricText, submissionText, "\nWrite your feedback now, following the 6 rules. Maximum 4 sentences."].join("\n\n");
+  return [
+    { role: "system", content: systemPrompt },
+    {
+      role: "user",
+      content: [exerciseText, rubricText, submissionText, "\nReturn the JSON now."].join("\n\n"),
+    },
+  ];
+}
+
+function buildSummaryPrompt(req: SessionSummaryRequest): AiMessage[] {
+  const systemPrompt = `${VOICE_RULES}
+
+You are summarizing a complete Sandbox session of ${req.exerciseResults.length} exercises.
+
+Respond with this exact JSON shape:
+{
+  "greeting":     "<a short warm closing line, 4-7 words. e.g. 'Strong session, Nakato.' or 'Real progress today.'>",
+  "strongAreas":  "<one or two sentences naming what the teacher did well across all exercises>",
+  "growthAreas":  "<one or two sentences naming where there's room to grow, kindly>",
+  "mondayAction": "<ONE concrete thing the teacher can try in their next class, max one sentence>"
+}
+
+No "Congratulations" — warm but professional. Never use "wrong", "incorrect", "mistake".`;
+
+  const resultsText = req.exerciseResults
+    .map((r, i) => {
+      const constructs = r.perConstruct
+        ? r.perConstruct.map((c) => `${c.construct}=${c.alignment}`).join(", ")
+        : "";
+      return `Exercise ${i + 1} (${r.exerciseType}): overall=${r.overallAlignment}${constructs ? `, ${constructs}` : ""}`;
+    })
+    .join("\n");
+
+  return [
+    { role: "system", content: systemPrompt },
+    {
+      role: "user",
+      content: `Brief: "${req.updateTitle}"\n\nResults across all exercises in this session:\n${resultsText}\n\nReturn the JSON now.`,
+    },
+  ];
 }
 
 // ─────────────────────────────────────────────────────────────
-// Validation
+// Parsing & validation
 // ─────────────────────────────────────────────────────────────
 
 const FORBIDDEN = ["wrong", "incorrect", "mistake"];
+const ALIGNMENTS = new Set<Alignment>(["strong", "partial", "weak"]);
+const CONSTRUCTS = new Set<ConstructKey>(["knowledge", "skill", "application", "values"]);
 
-function isWellFormed(text: string): boolean {
-  if (!text || text.length < 30) return false;
+function parseJsonResponse(text: string): Record<string, unknown> | null {
+  // Strip markdown code fences if the model added them despite instructions
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+  }
+  // Find the first { and last } in case there's any preamble or trailing text
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start < 0 || end < 0 || end <= start) return null;
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+function hasForbiddenWords(text: string): boolean {
   const lower = text.toLowerCase();
-  // Reject if it violates the voice rules
-  for (const word of FORBIDDEN) {
-    // word-boundary check so we don't reject "wrongdoing" inside a constructive critique etc.
-    const re = new RegExp(`\\b${word}\\b`, "i");
-    if (re.test(lower)) return false;
+  return FORBIDDEN.some((w) => new RegExp(`\\b${w}\\b`).test(lower));
+}
+
+function validatePerExercise(p: Record<string, unknown>): boolean {
+  const required: Array<keyof StructuredFeedback> = ["youSaid", "ncdcSays", "theGap", "tryThis", "overallAlignment"];
+  for (const k of required) {
+    if (typeof p[k] !== "string" || (p[k] as string).length < 5) return false;
+  }
+  if (!ALIGNMENTS.has(p.overallAlignment as Alignment)) return false;
+  if (hasForbiddenWords([p.youSaid, p.ncdcSays, p.theGap, p.tryThis].join(" "))) return false;
+
+  if ("perConstruct" in p && Array.isArray(p.perConstruct)) {
+    for (const c of p.perConstruct as Array<Record<string, unknown>>) {
+      if (typeof c.construct !== "string" || !CONSTRUCTS.has(c.construct as ConstructKey)) return false;
+      if (!ALIGNMENTS.has(c.alignment as Alignment)) return false;
+      if (typeof c.note !== "string" || hasForbiddenWords(c.note)) return false;
+    }
   }
   return true;
 }
 
+function validateSummary(p: Record<string, unknown>): boolean {
+  const required = ["greeting", "strongAreas", "growthAreas", "mondayAction"] as const;
+  for (const k of required) {
+    if (typeof p[k] !== "string" || (p[k] as string).length < 3) return false;
+  }
+  return !hasForbiddenWords(required.map((k) => p[k] as string).join(" "));
+}
+
 // ─────────────────────────────────────────────────────────────
-// Fallback feedback (citation-first, calm, never errors)
+// Citation pick & enrichment
 // ─────────────────────────────────────────────────────────────
 
-function fallbackFeedback(req: GradeRequest, descriptor: string): string {
-  const intro = `NCDC says: "${descriptor}"`;
-  const body = req.exercise.type === "regrade"
-    ? "Your grades have been recorded. The grading system here is set up to compare your alignment against this descriptor in detail; if you find your scoring varies a lot from a colleague's, the descriptor is the source of truth to return to."
-    : "Your response has been recorded. The detailed review system would normally compare your specific answer against this descriptor and highlight where alignment is strong and where there's a gap to close.";
-  return `${intro} ${body}`;
+function pickCitation(req: GradeRequest): { descriptor: string; construct: ConstructKey } {
+  // For free-text types, Application is usually the most context-rich descriptor.
+  // For re-grade, find the construct where the teacher's grade is most likely
+  // to need NCDC clarification (heuristic: pick Application as default).
+  const r = req.exercise.rubric;
+  if (req.exercise.type === "regrade" && req.grades) {
+    // Pick the construct whose grade is the most extreme (A or E) since those
+    // are the ones most worth citing back to.
+    const order: ConstructKey[] = ["application", "values", "skill", "knowledge"];
+    for (const k of order) {
+      if (req.grades[k] === "A" || req.grades[k] === "E") {
+        return { descriptor: r[k].descriptor, construct: k };
+      }
+    }
+  }
+  return { descriptor: r.application.descriptor || r.knowledge.descriptor || "(no descriptor)", construct: "application" };
+}
+
+function enrichWithCitation(
+  parsed: Record<string, unknown>,
+  citation: { descriptor: string; construct: ConstructKey },
+  source: "ai" | "fallback",
+): StructuredFeedback {
+  return {
+    citationDescriptor: citation.descriptor,
+    citationConstruct: citation.construct,
+    youSaid: clean(parsed.youSaid),
+    ncdcSays: clean(parsed.ncdcSays),
+    theGap: clean(parsed.theGap),
+    tryThis: clean(parsed.tryThis),
+    overallAlignment: parsed.overallAlignment as Alignment,
+    perConstruct: Array.isArray(parsed.perConstruct)
+      ? (parsed.perConstruct as ConstructFeedback[]).map((c) => ({
+          construct: c.construct,
+          alignment: c.alignment,
+          note: clean(c.note),
+        }))
+      : undefined,
+    source,
+  };
+}
+
+function clean(v: unknown): string {
+  return typeof v === "string" ? v.trim() : "";
+}
+
+// ─────────────────────────────────────────────────────────────
+// Fallbacks (calm, citation-first, never errors)
+// ─────────────────────────────────────────────────────────────
+
+function fallbackPerExercise(req: GradeRequest, citation: { descriptor: string; construct: ConstructKey }): StructuredFeedback {
+  const isRegrade = req.exercise.type === "regrade";
+
+  return {
+    citationDescriptor: citation.descriptor,
+    citationConstruct: citation.construct,
+    youSaid: isRegrade
+      ? "Your construct grades have been recorded."
+      : "Your response has been recorded.",
+    ncdcSays: citation.descriptor,
+    theGap: "The detailed comparison against the official descriptor needs a fresh AI call. Try the exercise again in a moment.",
+    tryThis: "When the comparison is available, look first at whether your response named a specific Ugandan context.",
+    overallAlignment: "partial",
+    perConstruct: isRegrade
+      ? [
+          { construct: "knowledge",   alignment: "partial", note: "Awaiting alignment check." },
+          { construct: "skill",       alignment: "partial", note: "Awaiting alignment check." },
+          { construct: "application", alignment: "partial", note: "Awaiting alignment check." },
+          { construct: "values",      alignment: "partial", note: "Awaiting alignment check." },
+        ]
+      : undefined,
+    source: "fallback",
+  };
+}
+
+function fallbackSummary(req: SessionSummaryRequest): SessionSummary {
+  // Look at the alignments and produce something honest without AI.
+  const counts = { strong: 0, partial: 0, weak: 0 };
+  for (const r of req.exerciseResults) counts[r.overallAlignment]++;
+
+  let strongAreas: string;
+  let growthAreas: string;
+  if (counts.strong > counts.weak) {
+    strongAreas = "Your grading lined up with the official descriptors more often than not, which is the harder part of the new curriculum.";
+    growthAreas = "Where the alignment was partial, the descriptors are worth a second read before your next assessment.";
+  } else if (counts.weak > counts.strong) {
+    growthAreas = "Several exercises showed gaps between your assessment and the official descriptor. This is the most common adjustment teachers report.";
+    strongAreas = "You completed the full session, which already puts you ahead of most teachers on the transition.";
+  } else {
+    strongAreas = "Mixed alignment across the session is typical at this stage of CBC implementation.";
+    growthAreas = "The descriptors that came up most often are worth keeping near your lesson planner.";
+  }
+
+  return {
+    greeting: "Session complete.",
+    strongAreas,
+    growthAreas,
+    mondayAction: "Open one of your last term's tests and re-grade a single question using the new construct rubric. Notice what shifts.",
+    source: "fallback",
+  };
 }

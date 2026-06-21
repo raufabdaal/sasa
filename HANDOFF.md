@@ -5,143 +5,137 @@
 ---
 
 ## Session ID
-`2026-06-20-005` (free-tier, em dash purge, onboarding gate, completion celebration)
+`2026-06-21-002` (Structured feedback: thought-walk + session summary)
 
 ## What I worked on this session
 
-Founder gave a clean diagnosis after running the v2.1 app:
-1. App goes straight to `/feed` instead of `/onboarding` on first visit (correct current behavior, but worth fixing for v0 demo)
-2. Em dashes everywhere read as "AI tells"
-3. Listen / Save icons should stay visible but defer the work
-4. **NO BUDGET right now**, but still wants AI grading + read-aloud + sign-in if possible
-5. Approved free polish
+Founder ran the live AI Sandbox after MT-012 setup and gave feedback: the AI works, but feedback shows up as one paragraph. Wanted it to feel like a thoughtful walk-through (You said / NCDC says / The gap / Try this), with per-construct alignment chips on re-grade, and a proper session summary after the last exercise instead of just the "you're done" pulse.
 
-**All five addressed:**
-
-### 1. Free-tier strategy (DEV-012, DEV-013, DEV-014)
-- Anthropic Claude → swapped for **Groq + Gemini** (both genuinely free, no credit card)
-- Clerk auth → **deferred entirely for v0**, localStorage takes its place
-- ElevenLabs TTS → **deferred**, speaker icon shows polite "Listening coming soon" toast
-- Founder still creates 2 free API keys (Groq, Gemini) when they want real AI on; until then, stand-in feedback is in place
-
-### 2. Em dash purge (DEV-011)
-- Python script + manual fixes removed every em/en dash from user-facing surfaces
-- 5 MDX briefs, all TSX pages, all JSX text, preview.html
-- Internal docs (CHANGELOG, STATUS, design philosophy) keep their dashes since users never see them
-
-### 3. Onboarding gate (DEV-015)
-- Root page `/` is now a client component that checks `localStorage.sasa.onboarded`
-- First-time visitor → redirected to `/onboarding`
-- Subsequent visits → `/feed`
-- Brief "Opening Sasa" splash while it decides (should flash for ~50ms)
-- Onboarding's final CTAs ("Show me what's new" / "I'll just browse") now both set the flag and route via `router.push('/feed')`
-
-### 4. Coming-soon toast (DEV-014)
-- New `<ComingSoonAction kind="listen" | "save" />` client component
-- Speaker icon → toast "Listening coming soon."
-- Bookmark icon → toast "Saving coming soon."
-- Desktop right rail: same icons but rendered as passive labels with "Soon" hint (no toast needed for static text)
-
-### 5. Completion celebration (free polish #1)
-- When user finishes last Sandbox exercise, they now see:
-  - Gold halo pulse (one time only, ~700ms, never repeats)
-  - Solid gold circle with check mark
-  - "You're done." in big serif
-  - "Added to your Ledger" subtitle
-  - Two clear CTAs: "See your Ledger" (primary coral) + "Back to Feed" (secondary)
-
-### 6. Docs updated
-- `SECRETS_AND_KEYS.md`: § 1 is now Groq, § 1b is Gemini, § 1c notes Anthropic deferred
-- `MANUAL_TASKS.md`: MT-010 free Groq, new MT-011 free Gemini, MT-020 Clerk marked deferred
-- `.env.example`: Groq + Gemini + AI_PROVIDER selector
-- `CHECKLIST.md`: full re-count (69 done, 42 left, 62%)
-- `DESIGN_DEVIATIONS.md`: DEV-011 to DEV-015 logged
-- `CHANGELOG.md`: 0.2.2 version block
+**Built:**
+1. **Restructured grading.ts** to return JSON (not paragraphs). Per-exercise returns 6 fields plus optional per-construct array. New `summarizeSession()` returns 4 fields for the wrap-up.
+2. **New API mode** in `/api/grade` — body now includes `mode: "exercise" | "summary"`. Same endpoint serves both.
+3. **Rebuilt SandboxClient feedback UI** as a structured "thought walk" card:
+   - Header strip with alignment color (sage/peach/clay)
+   - Per-construct chips grid (re-grade only) showing per-construct alignment
+   - NCDC citation block with quote icon
+   - 3 stacked rows: You said / The gap / Try this
+4. **New session wrap-up screen** that calls a 2nd AI endpoint after the last exercise. Shows Where you were strong (sage) / Where to grow (peach) / Try this on Monday (cream + ink highlight). Plus the gold pulse celebration.
+5. **Bumped version to v0.5** in Profile.
 
 ## What I did NOT change
-- The actual coral/peach/sage color tokens (founder is happy)
-- Mobile layout (untouched)
-- Desktop layout (untouched)
-- The 4 onboarding steps' content/structure (just the routing on completion)
+- Mobile or desktop layout shells (untouched)
+- Design tokens (untouched)
+- The 5 MDX briefs (untouched)
+- Onboarding flow (untouched)
+- Ledger page (already fixed last round)
 
 ---
 
-## Where we are right now
+## ⚠️ FOUR FILES MUST LAND TOGETHER
 
-**Build is clean. 19 routes prerender.**
+(Per the "partial copy" lesson we logged. These changes are coupled.)
 
-When founder runs `launch.bat` and visits `localhost:3000`:
-- Sees a brief "Opening Sasa" splash, then redirected to `/onboarding` (first time)
-- Completes onboarding, lands on `/feed`
-- Future visits skip onboarding, go straight to `/feed`
-- All copy is em-dash-free
-- Speaker icon in Brief shows polite toast when tapped
-- Completing all 3 Sandbox exercises triggers the gold-pulse celebration
+The new `SandboxClient` expects new fields in the API response. The new API expects new validation in `grading.ts`. **If any one of these files is older than the others, the build will fail with type errors.** Copy all 4 in one pass.
 
-To reset and try onboarding again: open DevTools → Application → Local Storage → delete `sasa.onboarded`.
+---
+
+## 📋 Path D — meticulous file change list
+
+> Per the workflow we agreed on. Copy these files from the workspace zip to your real `sasa` folder, overwriting.
+
+**Important:** your local folder is at `C:\Users\DELL\Desktop\sasa\` and stays at that name. The workspace zip extracts to wherever, but the path INSIDE the zip mirrors your folder structure exactly.
+
+### Files changed this session (4)
+
+| # | File path | Why |
+|---|---|---|
+| 1 | `app/src/lib/grading.ts` | Returns structured JSON now |
+| 2 | `app/src/app/api/grade/route.ts` | Handles `mode: "exercise"` AND `mode: "summary"` |
+| 3 | `app/src/components/sandbox/SandboxClient.tsx` | New thought-walk feedback UI + session wrap-up |
+| 4 | `app/src/app/(app)/me/page.tsx` | Version stamp v0.5 |
+
+### Plus: docs files (also changed, optional but recommended for keeping repo tidy)
+
+| # | File path | Why |
+|---|---|---|
+| 5 | `CHANGELOG.md` | 0.5.0 entry |
+| 6 | `STATUS.md` | session 2026-06-21-002 status |
+| 7 | `HANDOFF.md` | this file |
+
+### Copy procedure (the exact steps)
+
+1. Download the workspace zip from this chat
+2. Extract somewhere temporary
+3. Inside the extracted folder, navigate to `app/src/lib/grading.ts`
+4. Copy that file into your local `C:\Users\DELL\Desktop\sasa\app\src\lib\grading.ts` (overwriting)
+5. Repeat for the other 3 code files above
+6. Optionally copy the 3 doc files
+7. Open GitHub Desktop
+8. You should see exactly 4 (or 7 if you copied docs) changed files in the Changes panel
+   - **If you see more or fewer, stop.** You missed a file or copied something extra. Tell me what GitHub Desktop shows and I'll diagnose.
+9. Commit message: `feat: structured thought-walk feedback + session summary`
+10. Commit to main → Push origin
+11. Vercel auto-deploys (~90 sec)
+
+### After deploy: test
+
+1. Open https://sasa-omega-rosy.vercel.app
+2. Open the Chemistry Brief → Try in the Sandbox
+3. Grade all 4 constructs A-E → Submit
+4. **What you should see now:**
+   - Header strip with sage/peach/clay color depending on alignment
+   - 4 small chips (Knowledge / Skill / Application / Values) each with their own alignment color and one-sentence note
+   - NCDC quote block
+   - "You said" / "The gap" / "Try this next time" stacked rows
+5. Click Next → Next → finish all 3 exercises
+6. **On the final screen** you should see the structured summary (loads in ~1-2 sec):
+   - Gold check + "Session complete" greeting
+   - "Where you were strong" (sage block)
+   - "Where to grow" (peach block)
+   - "Try this on Monday" (cream + ink highlight)
+7. **Paste me a screenshot or the text you saw** so I can verify quality
+
+---
 
 ## What's broken
 Nothing.
 
 ## What's running
-Nothing in this sandbox. Founder runs locally.
+- Live site at https://sasa-omega-rosy.vercel.app (currently still v0.4 until you push this update)
+- AI grading is live and working (founder confirmed last session)
 
 ---
 
 ## To resume cleanly, next session should:
 
-1. Read `STATUS.md` → `HANDOFF.md` → `CHANGELOG.md` (last entry)
-2. Check `CHECKLIST.md` for the at-a-glance state
-3. Ask founder what direction:
-   - **Phase D (real AI grading)** — needs founder to do MT-010 + MT-011 (both free, ~6 min total)
-   - **More free polish** — scroll-spy section labels, reading-progress bar, search
-   - **More Sandbox exercise types** — currently only `regrade` has full UI; build `rewrite`, `plan_opener`, etc.
+1. Read STATUS → HANDOFF → CHANGELOG last entry
+2. Ask founder how the new feedback UX feels
+3. If founder happy → pick next direction:
+   - Ledger PDF export (Phase E, free, no auth needed)
+   - Scroll-spy section labels in Brief top bar
+   - Search across past Briefs
+   - Real Ledger persistence in localStorage (so completed Sandboxes actually save)
+4. If founder wants tuning on the feedback structure → adjust prompt or layout
 
 ---
 
 ## Open questions for the founder
 
-- [ ] **Try the onboarding flow** — visit `localhost:3000`, you should auto-route to `/onboarding`. Walk through it and tell me if the flow feels right
-- [ ] **Try finishing a full Sandbox** — open a Brief, hit "Try it in the Sandbox", grade all 4 constructs A-E on 3 consecutive exercises, see the completion celebration
-- [ ] **Em dashes** — any you spotted I missed? Let me know exactly where
-- [ ] **MT-010 + MT-011** — willing to spend 6 minutes creating two free API keys to unlock real AI? Both signups have no credit card, no payment ever
-
----
-
-## Files touched this session
-
-```
-NEW
-+  app/src/components/brief/ComingSoonAction.tsx
-
-REWRITTEN
-M  app/src/app/page.tsx                              (client component with localStorage gate)
-M  app/src/components/onboarding/OnboardingClient.tsx (finishOnboarding writes flag)
-M  app/src/components/sandbox/SandboxClient.tsx     (completion celebration)
-M  app/src/app/(app)/feed/[slug]/page.tsx          (ComingSoonAction in top bar; passive labels in rail)
-M  app/src/app/(app)/ledger/page.tsx                (em dashes)
-M  app/src/app/(app)/me/page.tsx                    (em dashes)
-M  preview.html                                     (em dash purge + toast script)
-M  content/updates/*.mdx (all 5)                    (em dash purge)
-M  .env.example                                     (Groq+Gemini)
-M  docs/ops/SECRETS_AND_KEYS.md                     (free-tier path)
-M  docs/ops/MANUAL_TASKS.md                         (MT-010 free, MT-011 added, MT-020 deferred)
-M  docs/spec/DESIGN_DEVIATIONS.md                   (DEV-011 to DEV-015)
-M  CHECKLIST.md                                     (recount)
-M  STATUS.md  CHANGELOG.md  HANDOFF.md
-```
+- [ ] **Does the new thought-walk feel like a real breakdown** or still too dense?
+- [ ] **Per-construct chips on re-grade** — useful at a glance or visual noise?
+- [ ] **The traffic-light colors (sage/peach/clay)** — feels respectful or judgmental?
+- [ ] **Session summary copy** — too long, just right, or could be even more concrete?
 
 ---
 
 ## End-of-session ritual completed?
-- [x] CHANGELOG.md updated (0.2.2)
+- [x] CHANGELOG.md updated (0.5.0)
 - [x] STATUS.md updated
 - [x] HANDOFF.md overwritten (this file)
-- [x] CHECKLIST.md updated
-- [x] DESIGN_DEVIATIONS.md updated (DEV-011 through DEV-015)
-- [x] Build verified, 19 routes prerender
+- [x] Files-changed checklist included (Path D)
+- [x] Build verified
 
 ---
 
 ## Previous session ID
-`2026-06-20-004` (v2.1 brighter pops, desktop layout, readability, onboarding flow)
+`2026-06-21-001` (Phase D: real Groq AI grading + all 5 exercise types)
