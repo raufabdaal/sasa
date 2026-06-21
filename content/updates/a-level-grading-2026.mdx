@@ -1,0 +1,108 @@
+---
+slug: a-level-grading-2026
+title: A-Level moves to A-E construct-based grading
+summary: Numerical 1 to 9 scores retire. Each subject is now graded across four constructs with letter descriptors.
+
+level: A-Level
+subjects: [All]
+grades: [S5, S6]
+constructs: [Knowledge, Skill, Application, Values]
+topics: [grading, assessment, transition]
+
+changeType: assessment
+diffBefore: |
+  Numerical grading
+  1 (highest) .  9 (lowest)
+  Single composite score per subject
+diffAfter: |
+  Letter grading A .  E
+  A .  exceptional
+  B .  outstanding
+  C .  satisfactory
+  D .  basic
+  E .  elementary
+  Graded per construct; averaged
+diffRationale: Aligns A-Level with the O-Level competency-based curriculum introduced in 2020. Construct-level grades give learners and employers a richer picture than a single number.
+
+source:
+  publisher: NCDC
+  docTitle: NCDC announcement .  A-Level grading transition
+  docUrl: https://ncdc.go.ug/announcements/2026-03-a-level-grading
+  issuedDate: 2026-03-06T00:00:00.000Z
+
+effectiveDate: 2026-09-01T00:00:00.000Z
+estimatedReadMinutes: 8
+reviewer: Aisha Namaganda
+aiContribution: 0.6
+publishedAt: 2026-05-03T08:00:00.000Z
+
+sandboxExercises:
+  - id: identify-construct-physics
+    type: identify_construct
+    estimatedMinutes: 4
+    prompt: |
+      Read this S5 Physics question. Which construct(s) does it primarily test under the new system?
+      "Design an experiment to estimate the specific heat capacity of a stone from your village. State your hypothesis, list your apparatus, and explain how you would minimize heat loss."
+    reference: ""
+    rubric:
+      knowledge:   { weight: 25, descriptor: "Question requires specific physics concepts." }
+      skill:       { weight: 25, descriptor: "Question requires a procedural method." }
+      application: { weight: 25, descriptor: "Question is grounded in a real, local context." }
+      values:      { weight: 25, descriptor: "Question invites reasoning about care, accuracy, or honesty." }
+
+  - id: regrade-history
+    type: regrade
+    estimatedMinutes: 4
+    prompt: |
+      Under the new construct-based system, grade this S6 History response across all four constructs.
+    reference: |
+      "The Lancaster House Conference in 1962 was where Uganda negotiated its independence. The main parties were the UPC, DP, and KY. The conference produced the Uganda Independence Act of 1962. Although it gave Uganda flag independence, it left many federal issues unresolved, which contributed to later political instability."
+    rubric:
+      knowledge:   { weight: 25, descriptor: "Factual accuracy of dates, parties, and outcomes." }
+      skill:       { weight: 25, descriptor: "Coherent historical argument." }
+      application: { weight: 25, descriptor: "Connects the past to a present-day Ugandan reality." }
+      values:      { weight: 25, descriptor: "Reflects on responsible historical thinking." }
+
+  - id: rewrite-economics
+    type: rewrite
+    estimatedMinutes: 3
+    prompt: |
+      Convert this old-style A-Level Economics prompt into one that the new construct-based grading can fully assess:
+      "Define inflation. Give two causes and two effects."
+    reference: ""
+    rubric:
+      knowledge:   { weight: 25, descriptor: "Anchors in economic theory." }
+      skill:       { weight: 25, descriptor: "Requires analysis, not only definition." }
+      application: { weight: 25, descriptor: "Set in Uganda's economy today." }
+      values:      { weight: 25, descriptor: "Invites a judgment on equity or wellbeing." }
+---
+
+## Context
+
+A-Level in Uganda has used a numerical grading scale since the 1970s. **1 (highest) through 9 (lowest)**. with a single composite score per subject. This made comparison easy but hid *what* a learner actually understood.
+
+When the lower-secondary Competency-Based Curriculum landed in 2020, the upper-secondary scale stayed numerical. From 2026, that changes.
+
+## The Change
+
+A-Level joins O-Level on a **letter grading scale of A to E**, with each subject scored across four constructs (Knowledge, Skill, Application, Values) and a final grade composed from the construct grades. not a single number.
+
+| Letter | Descriptor |
+|---|---|
+| A | Exceptional achievement |
+| B | Outstanding performance |
+| C | Satisfactory performance |
+| D | Basic understanding |
+| E | Elementary understanding |
+
+## Why
+
+Two reasons. **Continuity**: a learner who spent O-Level being assessed by construct shouldn't suddenly be reduced to a single number in S5. **Resolution**: a `B` overall that masks an `A` in Application and a `D` in Values tells a teacher more in two letters than a `2` ever did.
+
+## Classroom Example
+
+An S5 Biology learner submits a written-up field study of soil acidity on her family's plot in Mpigi. Old system: she got a `3`. New system: `A` Application, `B` Knowledge, `B` Skill, `C` Values. final grade `B+`, with a clear note that her values discussion (safe handling, neighbor consultation) was thin.
+
+## Common Pitfall
+
+**Do not try to "convert" old numerical marks into letters by a fixed table.** The new system grades constructs separately and then composes. A student with a strong overall numerical 2 might land at `B` because Values pulls them down. Re-grade fresh, not by translation.

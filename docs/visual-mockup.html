@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sasa — Spec & Master Prompt</title>
+<style>
+  :root {
+    --paper: #FAF8F4;
+    --paper-2: #F2EFE8;
+    --paper-3: #E8E3D8;
+    --ink: #1A1A1A;
+    --ink-2: #4A4742;
+    --ink-3: #8A857C;
+    --line: rgba(0, 0, 0, 0.08);
+    --brass: #7A6233;
+    --clay: #8B4A2B;
+    --book: #2B2118;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: "New York", "Source Serif 4", "Newsreader", Georgia, serif; }
+  .mono  { font-family: "SF Mono", "JetBrains Mono", ui-monospace, monospace; }
+
+  /* Top liquid-glass bar */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(250, 248, 244, 0.72);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    backdrop-filter: blur(24px) saturate(140%);
+    border-bottom: 0.5px solid var(--line);
+    box-shadow:
+      inset 0 0.5px 0 rgba(255,255,255,0.6),
+      0 1px 2px rgba(0,0,0,0.03);
+  }
+  .topbar-inner {
+    max-width: 1180px; margin: 0 auto;
+    padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px;
+  }
+  .wordmark { font-weight: 600; letter-spacing: -0.01em; }
+  .topbar nav { display: flex; gap: 28px; color: var(--ink-2); }
+  .topbar nav a { color: inherit; text-decoration: none; }
+  .topbar nav a:hover { color: var(--ink); }
+
+  main { max-width: 760px; margin: 0 auto; padding: 96px 32px 160px; }
+
+  /* Hero */
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-3); font-family: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+    margin-bottom: 28px;
+  }
+  h1.hero {
+    font-family: "New York", "Source Serif 4", Georgia, serif;
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 1.05; letter-spacing: -0.02em;
+    font-weight: 500;
+    max-width: 16ch;
+    margin-bottom: 28px;
+  }
+  .sub {
+    font-family: "New York", "Source Serif 4", Georgia, serif;
+    font-size: 22px; line-height: 1.45; color: var(--ink-2);
+    max-width: 56ch; font-style: italic;
+  }
+
+  /* Section heads */
+  section { margin-top: 120px; }
+  .section-label {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-3); font-family: "SF Mono", monospace;
+    padding-bottom: 12px; border-bottom: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+  h2 {
+    font-family: "New York", "Source Serif 4", Georgia, serif;
+    font-size: 34px; letter-spacing: -0.015em; font-weight: 500;
+    margin-bottom: 20px; line-height: 1.15;
+  }
+  h3 {
+    font-family: "New York", "Source Serif 4", Georgia, serif;
+    font-size: 22px; letter-spacing: -0.01em; font-weight: 500;
+    margin: 40px 0 12px;
+  }
+  p, li {
+    font-size: 17px; line-height: 1.65; color: var(--ink-2);
+    max-width: 64ch;
+  }
+  p + p { margin-top: 18px; }
+  ul, ol { padding-left: 22px; margin-top: 12px; }
+  li + li { margin-top: 6px; }
+  strong { color: var(--ink); font-weight: 600; }
+
+  /* The four pillars grid */
+  .pillars {
+    margin-top: 48px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  @media (max-width: 640px) { .pillars { grid-template-columns: 1fr; } }
+  .pillar {
+    background: var(--paper);
+    padding: 32px 28px;
+  }
+  .pillar .num {
+    font-family: "SF Mono", monospace; font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.1em;
+  }
+  .pillar .name {
+    font-family: "New York", Georgia, serif; font-size: 22px;
+    font-weight: 500; margin: 8px 0 10px; color: var(--ink);
+  }
+  .pillar p { font-size: 15px; max-width: none; }
+
+  /* Mock UI cards */
+  .mock {
+    margin-top: 36px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 18px 60px rgba(0,0,0,0.05);
+  }
+  .mock-inner { background: var(--paper); border-radius: 14px; overflow: hidden; }
+  .mock-bar {
+    padding: 12px 18px;
+    background: rgba(250, 248, 244, 0.78);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    backdrop-filter: blur(24px) saturate(140%);
+    border-bottom: 0.5px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px;
+  }
+  .mock-bar .greet { color: var(--ink-2); }
+  .mock-bar .avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--paper-3); border: 0.5px solid var(--line);
+  }
+  .feed-card {
+    padding: 22px 22px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .feed-card:last-child { border-bottom: none; }
+  .feed-card .row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .pill {
+    font-family: "SF Mono", monospace; font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-2);
+    background: var(--paper-2); padding: 4px 9px; border-radius: 4px;
+  }
+  .new-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--ink);
+    display: inline-block;
+  }
+  .feed-card .title {
+    font-family: "New York", Georgia, serif; font-size: 20px;
+    line-height: 1.25; font-weight: 500; color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .feed-card .summary {
+    font-size: 14px; color: var(--ink-2); line-height: 1.5; max-width: none;
+    margin-bottom: 10px;
+  }
+  .feed-card .meta {
+    font-size: 11.5px; color: var(--ink-3);
+  }
+
+  /* Brief mock */
+  .brief {
+    padding: 36px 28px 28px;
+  }
+  .brief .secthead {
+    font-family: "SF Mono", monospace; font-size: 10.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-3); margin: 24px 0 14px;
+    padding-top: 18px; border-top: 1px solid var(--line);
+  }
+  .brief .secthead:first-child { padding-top: 0; border-top: none; margin-top: 0; }
+  .brief-title {
+    font-family: "New York", Georgia, serif; font-size: 28px;
+    line-height: 1.2; font-weight: 500; margin-bottom: 10px; color: var(--ink);
+  }
+  .brief-meta { font-size: 11.5px; color: var(--ink-3); margin-bottom: 22px; }
+  .brief p {
+    font-family: "New York", Georgia, serif; font-size: 17px;
+    line-height: 1.65; color: var(--ink); max-width: none;
+  }
+  .diff {
+    margin: 18px 0; display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1px; background: var(--line); border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden;
+    font-family: "SF Mono", monospace; font-size: 13px;
+  }
+  .diff .before, .diff .after { background: var(--paper); padding: 14px 16px; }
+  .diff .before { color: #8a3a3a; text-decoration: line-through; text-decoration-color: rgba(138,58,58,0.5); }
+  .diff .after { color: #2f6a3a; }
+  .diff .lbl {
+    font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-3); margin-bottom: 6px; display: block;
+    text-decoration: none;
+  }
+  @media (max-width: 540px) { .diff { grid-template-columns: 1fr; } }
+
+  .construct-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: var(--line); border: 1px solid var(--line);
+    width: 220px; border-radius: 8px; overflow: hidden; margin: 18px 0;
+  }
+  .cg { background: var(--paper); padding: 12px 14px; }
+  .cg .k { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); font-family: "SF Mono", monospace; }
+  .cg .g { font-family: "New York", Georgia, serif; font-size: 22px; font-weight: 500; margin-top: 4px; }
+
+  .cta-row {
+    margin-top: 32px; padding-top: 22px; border-top: 1px solid var(--line);
+  }
+  .cta {
+    display: inline-block; background: var(--ink); color: var(--paper);
+    padding: 14px 22px; border-radius: 10px; font-weight: 500; font-size: 14px;
+    text-decoration: none; letter-spacing: -0.005em;
+  }
+  .ai-note { font-size: 11px; color: var(--ink-3); margin-top: 14px; font-family: "SF Mono", monospace; }
+
+  /* Sandbox mock */
+  .sandbox { padding: 28px; }
+  .sandbox .ref {
+    background: var(--paper-2); border-radius: 10px; padding: 18px;
+    font-family: "New York", Georgia, serif; font-style: italic;
+    font-size: 15px; color: var(--ink); line-height: 1.55;
+  }
+  .grade-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--line);
+  }
+  .grade-row:last-child { border-bottom: none; }
+  .grade-row .lbl { font-size: 14px; font-weight: 500; }
+  .grade-row .weight { font-family: "SF Mono", monospace; font-size: 11px; color: var(--ink-3); margin-left: 6px; }
+  .seg { display: flex; gap: 4px; }
+  .seg .b {
+    width: 30px; height: 30px; display: grid; place-items: center;
+    border: 1px solid var(--line); border-radius: 6px;
+    font-family: "SF Mono", monospace; font-size: 12px; color: var(--ink-2);
+    cursor: default;
+  }
+  .seg .b.sel { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .feedback {
+    margin-top: 20px; padding: 18px; background: var(--paper-2);
+    border-radius: 10px;
+  }
+  .feedback .check { font-size: 11px; color: var(--ink-3); margin-bottom: 8px; }
+  .feedback p { font-family: "New York", Georgia, serif; font-size: 15.5px; line-height: 1.55; color: var(--ink); max-width: none; }
+  .feedback p + p { margin-top: 10px; }
+
+  /* Ledger mock */
+  .ledger { padding: 32px 28px; }
+  .ledger .name { font-family: "New York", Georgia, serif; font-size: 26px; font-weight: 500; }
+  .ledger .school { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+  .streak {
+    margin: 26px 0 30px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .saturn {
+    width: 56px; height: 56px; display: grid; place-items: center; position: relative;
+  }
+  .saturn::before, .saturn::after {
+    content: ""; position: absolute; border: 1px solid var(--ink); border-radius: 50%;
+  }
+  .saturn::before { width: 32px; height: 32px; opacity: 0.6; }
+  .saturn::after  { width: 50px; height: 50px; opacity: 0.25; }
+  .saturn .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--ink); }
+  .streak .label { font-family: "SF Mono", monospace; font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; }
+
+  .ledger .month {
+    font-family: "SF Mono", monospace; font-size: 10.5px; letter-spacing: 0.18em;
+    color: var(--ink-3); text-transform: uppercase; margin: 24px 0 8px;
+  }
+  .ledger .row {
+    display: grid; grid-template-columns: 78px 1fr auto;
+    gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line);
+    align-items: baseline;
+  }
+  .ledger .row .d { font-family: "SF Mono", monospace; font-size: 11.5px; color: var(--ink-3); }
+  .ledger .row .t { font-family: "New York", Georgia, serif; font-size: 16px; color: var(--ink); }
+  .ledger .row .s { font-family: "SF Mono", monospace; font-size: 11.5px; color: var(--ink-3); }
+
+  /* Passport PDF preview */
+  .passport {
+    margin-top: 28px;
+    background: #FFFCF6;
+    border: 1px solid var(--line);
+    padding: 60px 56px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03), 0 30px 80px rgba(0,0,0,0.08);
+    border-radius: 4px;
+    font-family: "New York", Georgia, serif;
+  }
+  .passport .head {
+    font-family: "SF Mono", monospace; font-size: 11px;
+    letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--brass); padding-bottom: 14px; border-bottom: 1px solid var(--brass);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .passport .seal {
+    width: 60px; height: 60px; border-radius: 50%;
+    border: 2px solid var(--brass); opacity: 0.6;
+  }
+  .passport .pname { font-size: 36px; font-weight: 500; margin-top: 24px; letter-spacing: -0.015em; }
+  .passport .pschool { font-size: 12.5px; color: var(--ink-2); margin-top: 4px; font-family: -apple-system, sans-serif; }
+  .passport .pstats {
+    margin-top: 28px; font-size: 12.5px; font-family: "SF Mono", monospace;
+    color: var(--ink-2); padding: 12px 0; border-top: 6px solid var(--brass); border-bottom: 1px solid var(--line);
+  }
+  .passport table {
+    width: 100%; border-collapse: collapse; margin-top: 22px;
+    font-family: "SF Mono", monospace; font-size: 11px; color: var(--ink-2);
+  }
+  .passport td { padding: 10px 6px; border-bottom: 1px solid var(--line); }
+  .passport td.t { font-family: "New York", Georgia, serif; font-size: 13px; color: var(--ink); }
+  .passport td.right { text-align: right; }
+  .passport .pfoot {
+    margin-top: 36px; font-size: 9.5px; font-family: "SF Mono", monospace;
+    text-align: center; color: var(--ink-3); letter-spacing: 0.1em;
+  }
+
+  /* File list */
+  .files {
+    margin-top: 28px; border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden;
+  }
+  .files .f {
+    display: grid; grid-template-columns: 240px 1fr;
+    gap: 18px; padding: 16px 22px; border-bottom: 1px solid var(--line);
+    align-items: baseline;
+  }
+  .files .f:last-child { border-bottom: none; }
+  .files .f .n { font-family: "SF Mono", monospace; font-size: 12px; color: var(--ink); }
+  .files .f .d { font-size: 14px; color: var(--ink-2); }
+
+  /* Quote */
+  .quote {
+    margin: 80px 0;
+    font-family: "New York", Georgia, serif;
+    font-style: italic; font-size: 24px; line-height: 1.5;
+    color: var(--ink); text-align: center; max-width: 38ch;
+    margin-left: auto; margin-right: auto;
+  }
+  .quote-attr {
+    margin-top: 16px; font-style: normal;
+    font-family: "SF Mono", monospace; font-size: 11px;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3);
+  }
+
+  footer {
+    max-width: 760px; margin: 80px auto 0; padding: 32px;
+    border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--ink-3);
+    display: flex; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="wordmark">Sasa</div>
+    <nav>
+      <a href="#problem">Problem</a>
+      <a href="#product">Product</a>
+      <a href="#design">Design</a>
+      <a href="#files">Docs</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <div class="eyebrow">Spec · v0.1 · June 2026</div>
+  <h1 class="hero">The curriculum changed. We help teachers catch up.</h1>
+  <p class="sub">Sasa turns every NCDC circular and UNEB update into a 7-minute lesson a Ugandan teacher can teach tomorrow morning.</p>
+
+  <!-- Problem -->
+  <section id="problem">
+    <div class="section-label">01 — The Problem</div>
+    <h2>The cascade didn't reach the classroom.</h2>
+    <p>In 2020, Uganda rolled out a Competency-Based Curriculum for lower secondary. It was the right move — and it was rolled out the wrong way. NCDC trained 35% of teachers as "master trainers" and asked them to train the rest. They didn't.</p>
+    <p>A 2024 UNEB study found most teachers were still setting old-curriculum questions weeks before the first pioneer exam. UNEB only arrived to train teachers on assessment a few months before sitting day. Now, in 2026, the same cascade is being used for A-Level.</p>
+    <p>The information from NCDC and UNEB keeps changing — construct weights, sample papers, grading letters, new Activities of Integration. There is no single place a teacher can go to find <em>what changed since last term</em>, <em>what it means for Monday</em>, and <em>how to teach it</em>. Sasa is that place.</p>
+  </section>
+
+  <!-- Product -->
+  <section id="product">
+    <div class="section-label">02 — The Product</div>
+    <h2>Four quiet pillars.</h2>
+    <p>One platform, four screens, one job: keep every teacher current with the curriculum, every term, in under an hour a week.</p>
+
+    <div class="pillars">
+      <div class="pillar">
+        <div class="num">01 · FEED</div>
+        <div class="name">What's new?</div>
+        <p>A calm chronological list of curriculum updates filtered to the subjects you teach. One card, one change. No noise.</p>
+      </div>
+      <div class="pillar">
+        <div class="num">02 · BRIEF</div>
+        <div class="name">What does it mean?</div>
+        <p>Every card opens a 7-minute structured brief — Context, The Change, Why, Classroom Example, Common Pitfall. With audio.</p>
+      </div>
+      <div class="pillar">
+        <div class="num">03 · SANDBOX</div>
+        <div class="name">Can I do it?</div>
+        <p>Apply the change in a guided simulation. Re-grade a sample answer. Re-write an old question. AI feedback, citation first.</p>
+      </div>
+      <div class="pillar">
+        <div class="num">04 · LEDGER</div>
+        <div class="name">Am I keeping up?</div>
+        <p>A quiet record of every update internalized. Exportable as a serif-typeset Retooling Passport you can hand to your head teacher.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feed mock -->
+  <section>
+    <div class="section-label">03 — The Feed</div>
+    <h2>The morning newspaper, for the new curriculum.</h2>
+    <p>Cards separated by hairlines, not gaps. Subject pill in mono. Title in serif. Two-line summary. Tap once.</p>
+
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="mock-bar">
+          <div class="greet">Wasuze otya, Nakato.</div>
+          <div class="avatar"></div>
+        </div>
+
+        <div class="feed-card">
+          <div class="row">
+            <span class="pill">Chemistry · S3</span>
+            <span class="new-dot" title="new"></span>
+          </div>
+          <div class="title">Construct weights revised for O-Level Chemistry</div>
+          <div class="summary">From 40/30/30 to 30/30/40 — Application of Knowledge now carries the most weight in end-of-cycle assessment.</div>
+          <div class="meta">5 min read · NCDC Circular 2026/03 · June 2026</div>
+        </div>
+
+        <div class="feed-card">
+          <div class="row">
+            <span class="pill">Kiswahili · S1–S4</span>
+            <span class="new-dot"></span>
+          </div>
+          <div class="title">Official AOI sample bank released</div>
+          <div class="summary">28 new Activities of Integration covering compulsory Kiswahili, with model student responses for each construct grade.</div>
+          <div class="meta">8 min read · NCDC · April 2026</div>
+        </div>
+
+        <div class="feed-card">
+          <div class="row">
+            <span class="pill">A-Level · All subjects</span>
+            <span></span>
+          </div>
+          <div class="title">A-Level moves to A–E construct-based grading</div>
+          <div class="summary">Numerical 1–9 scores retire. Each subject is now graded across four constructs with letter descriptors.</div>
+          <div class="meta">7 min read · NCDC · March 2026</div>
+        </div>
+
+        <div class="feed-card">
+          <div class="row">
+            <span class="pill">History & Political Education</span>
+            <span></span>
+          </div>
+          <div class="title">Colonial and liberation arcs merged into one thematic unit</div>
+          <div class="summary">A continuous "Power, Resistance, Identity" arc replaces the previous two-topic split. New sample question types included.</div>
+          <div class="meta">6 min read · NCDC · May 2026</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Brief mock -->
+  <section>
+    <div class="section-label">04 — The Brief</div>
+    <h2>Seven minutes. Five sections. One change.</h2>
+    <p>Serif body, generous rhythm, sticky section labels as you scroll. The before-and-after diff animates in once, the moment you understand.</p>
+
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="mock-bar">
+          <span class="greet">CONTEXT</span>
+          <span class="greet" style="font-family: 'SF Mono', monospace; font-size: 10.5px; letter-spacing: 0.18em;">7 MIN · ◐</span>
+        </div>
+
+        <div class="brief">
+          <span class="pill">Chemistry · S3</span>
+          <div class="brief-title" style="margin-top: 14px;">Construct weights revised for O-Level Chemistry</div>
+          <div class="brief-meta">Effective July 2026 · NCDC Circular 2026/03 · Reviewed by Aisha Namaganda</div>
+
+          <div class="secthead">Context</div>
+          <p>When the Lower Secondary Curriculum launched in 2020, each Chemistry assessment was weighted 40% Knowledge, 30% Skill, and 30% Application of Knowledge. Values were observed but not separately graded. The intention was to ease teachers and learners into the new construct-based language.</p>
+
+          <div class="secthead">The Change</div>
+          <p>From the July 2026 term, the weights are redistributed:</p>
+
+          <div class="diff" aria-label="Before and after">
+            <div class="before">
+              <span class="lbl">Before · 2020</span>
+              Knowledge       40%<br>
+              Skill           30%<br>
+              Application     30%<br>
+              Values          (observed)
+            </div>
+            <div class="after">
+              <span class="lbl">After · July 2026</span>
+              Knowledge       30%<br>
+              Skill           30%<br>
+              Application     30%<br>
+              Values          10%
+            </div>
+          </div>
+
+          <div class="secthead">Why</div>
+          <p>NCDC's 2025 assessment review found that learners were over-rewarded for recalling reactions but under-rewarded for applying chemistry to real Ugandan contexts — water treatment in their districts, soap-making, fertilizer use on family farms. Lifting Application and naming Values explicitly is meant to bring the test back to the curriculum's original promise.</p>
+
+          <div class="secthead">Classroom Example</div>
+          <p>An S3 student writes the correct equation for the neutralization of lake-water alkalinity but does not connect it to a community problem. Under the old weights they earned a B overall. Under the new weights, the missing Application drags the grade to C+ — and the absence of any reflection on responsible water use shows as a D for Values.</p>
+
+          <div class="secthead">Common Pitfall</div>
+          <p><em>Do not</em> simply re-mark old papers with new weights. The questions themselves were written to test Knowledge first. Re-design at least one Activity of Integration per term to give learners somewhere to demonstrate Application and Values.</p>
+
+          <div class="cta-row">
+            <a class="cta" href="#sandbox">Try it in the Sandbox →</a>
+            <div class="ai-note">Drafted by AI from the official NCDC circular. Reviewed by Aisha Namaganda. AI contribution: 0.7.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sandbox mock -->
+  <section id="sandbox">
+    <div class="section-label">05 — The Sandbox</div>
+    <h2>Don't read about it. Try it.</h2>
+    <p>Every Brief ends with three exercises. Grade a real-style student response. Rewrite an old-curriculum question. Plan a five-minute lesson opener. The AI never says "wrong." It cites the construct descriptor first, then comments on your answer.</p>
+
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="mock-bar">
+          <span class="greet">EXERCISE 1 OF 3 · RE-GRADE</span>
+          <span class="greet mono" style="font-size: 10.5px; letter-spacing: 0.18em;">━━━ ─── ───</span>
+        </div>
+
+        <div class="sandbox">
+          <div class="eyebrow" style="margin-bottom: 14px;">S3 STUDENT RESPONSE</div>
+          <div class="ref">
+            "Sodium hydroxide reacts with hydrochloric acid to form sodium chloride and water. The equation is NaOH + HCl → NaCl + H₂O. This is a neutralization reaction because a strong base reacts with a strong acid."
+          </div>
+
+          <h3 style="margin-top: 28px;">Grade this using the NEW weights (30/30/30/10)</h3>
+
+          <div class="grade-row">
+            <div><span class="lbl">Knowledge</span><span class="weight">30%</span></div>
+            <div class="seg">
+              <div class="b sel">A</div><div class="b">B</div><div class="b">C</div><div class="b">D</div><div class="b">E</div>
+            </div>
+          </div>
+          <div class="grade-row">
+            <div><span class="lbl">Skill</span><span class="weight">30%</span></div>
+            <div class="seg">
+              <div class="b">A</div><div class="b sel">B</div><div class="b">C</div><div class="b">D</div><div class="b">E</div>
+            </div>
+          </div>
+          <div class="grade-row">
+            <div><span class="lbl">Application</span><span class="weight">30%</span></div>
+            <div class="seg">
+              <div class="b">A</div><div class="b">B</div><div class="b sel">C</div><div class="b">D</div><div class="b">E</div>
+            </div>
+          </div>
+          <div class="grade-row">
+            <div><span class="lbl">Values</span><span class="weight">10%</span></div>
+            <div class="seg">
+              <div class="b">A</div><div class="b">B</div><div class="b">C</div><div class="b sel">D</div><div class="b">E</div>
+            </div>
+          </div>
+
+          <div class="feedback">
+            <div class="check">✓ Your grade aligns with the official construct descriptor.</div>
+            <p>NCDC says: <em>"A response that links the chemical equation to a real-world Ugandan application earns B or higher in Application."</em></p>
+            <p>This student wrote a textbook neutralization without any link to context — your C for Application matches the descriptor exactly. One nuance: the new 10% weight on Values means even your D pulls the final grade noticeably; some teachers are giving partial credit when the student at least names a value-bearing context, even briefly.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ledger + Passport -->
+  <section>
+    <div class="section-label">06 — The Ledger</div>
+    <h2>A quiet record, undeniable on paper.</h2>
+    <p>Your Ledger is a chronological list of every update you have internalized. Export it as a Retooling Passport — typeset like a university transcript, brass-rule and all — and hand it to your head teacher.</p>
+
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="mock-bar">
+          <span class="greet">LEDGER</span>
+          <span class="greet" style="font-size: 12px;">Export</span>
+        </div>
+        <div class="ledger">
+          <div class="name">Nakato Sarah</div>
+          <div class="school">St. Mary's College Kisubi · Wakiso District</div>
+
+          <div class="streak">
+            <div class="saturn"><div class="dot"></div></div>
+            <div>
+              <div style="font-family: 'New York', Georgia, serif; font-size: 18px;">47 weeks current</div>
+              <div class="label">STREAK · 47 RINGS</div>
+            </div>
+          </div>
+
+          <div class="month">June 2026</div>
+          <div class="row"><div class="d">14 Jun</div><div class="t">Construct weights revised for O-Level Chemistry</div><div class="s">CHEM · 92%</div></div>
+          <div class="row"><div class="d">07 Jun</div><div class="t">New AOI design checklist for S2 Biology</div><div class="s">BIO · 88%</div></div>
+
+          <div class="month">May 2026</div>
+          <div class="row"><div class="d">28 May</div><div class="t">History & Political Education topic merge</div><div class="s">HIST · 79%</div></div>
+          <div class="row"><div class="d">14 May</div><div class="t">Kiswahili AOI sample bank — pronunciation rubric</div><div class="s">KIS · 84%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 56px;">The Retooling Passport</h3>
+    <p>One tap exports your Ledger as a PDF. It looks like this:</p>
+
+    <div class="passport">
+      <div class="head">
+        <span>RETOOLING PASSPORT</span>
+        <span style="font-family: 'SF Mono', monospace;">SASA · 2026</span>
+      </div>
+      <div class="pname">Nakato Sarah</div>
+      <div class="pschool">St. Mary's College Kisubi · Wakiso District · Teacher of Chemistry & Biology · S2–S4</div>
+      <div class="pstats">
+        47 CURRICULUM UPDATES INTERNALIZED &nbsp;·&nbsp; AVERAGE ALIGNMENT 84% &nbsp;·&nbsp; STREAK 47 WEEKS
+      </div>
+      <table>
+        <tr><td>14 Jun 2026</td><td class="t">Construct weights revised — O-Level Chemistry</td><td class="right">92%</td></tr>
+        <tr><td>07 Jun 2026</td><td class="t">New AOI design checklist — S2 Biology</td><td class="right">88%</td></tr>
+        <tr><td>28 May 2026</td><td class="t">History & PE topic merge — colonial → liberation arc</td><td class="right">79%</td></tr>
+        <tr><td>14 May 2026</td><td class="t">Kiswahili AOI sample bank — pronunciation rubric</td><td class="right">84%</td></tr>
+        <tr><td>03 May 2026</td><td class="t">A-Level grading transition — A–E construct descriptors</td><td class="right">90%</td></tr>
+      </table>
+      <div class="pfoot">ISSUED BY SASA &nbsp;·&nbsp; SASA.UG &nbsp;·&nbsp; 19 JUNE 2026</div>
+    </div>
+  </section>
+
+  <!-- Design -->
+  <section id="design">
+    <div class="section-label">07 — Design Philosophy</div>
+    <h2>Quiet sophistication. The work shows itself only to those who look.</h2>
+    <p><strong>Restraint is respect.</strong> Most EdTech for African markets is loud — bright primaries, cartoon mascots, "Congratulations 🎉" modals. It's condescending. Sasa does the opposite. We use whitespace the way a watchmaker uses the dial.</p>
+    <p><strong>The surprise is in the substrate.</strong> The user shouldn't say "wow, flashy." They should use Sasa for two weeks and slowly notice — the spring on a card dismiss is exactly right, the narrator pronounces <em>Nakawa</em> correctly, the export PDF has the school's motto in the footer.</p>
+    <p><strong>Content is the hero.</strong> Chrome recedes. Liquid glass surfaces are reserved for things that float — the top bar, the audio player, modal sheets. Everything else is flat warm paper. Type does seventy percent of the visual work.</p>
+
+    <h3>What we will never do</h3>
+    <ul>
+      <li>Confetti. Badges. Points. Leaderboards. The reward is the work itself.</li>
+      <li>Gradients longer than two stops or covering more than 30% of a screen.</li>
+      <li>Stock photos of African children. Map-of-Africa silhouettes. Kente patterns.</li>
+      <li>The word <em>"engagement"</em> anywhere in the UI.</li>
+      <li>"AI sparkle" icons. The AI is a colleague, not a magic trick.</li>
+      <li>Spinners. Skeletons only.</li>
+    </ul>
+  </section>
+
+  <div class="quote">
+    "In Uganda, when the curriculum changes, the teacher is the last one to be told and the first one to be blamed. Sasa changes that."
+    <div class="quote-attr">— THE FOUNDING NOTE</div>
+  </div>
+
+  <!-- Files -->
+  <section id="files">
+    <div class="section-label">08 — The Documents</div>
+    <h2>Everything you need to build this.</h2>
+    <p>Six documents in this workspace. The PRD is the brief. The design philosophy is the soul. The master prompt is what you paste into Claude Code, Cursor, or v0 when you're ready to start.</p>
+
+    <div class="files">
+      <div class="f"><div class="n">docs/PRD.md</div><div class="d">Full Product Requirements Document — problem, solution, features, tech stack, business model, risks.</div></div>
+      <div class="f"><div class="n">docs/design-philosophy.md</div><div class="d">The complete design language — color, type, motion, liquid glass spec, and the 10 "if you know, you know" details.</div></div>
+      <div class="f"><div class="n">docs/data-architecture.md</div><div class="d">The four-phase hybrid ingestion plan — mock now, admin upload + AI extraction next, scrape after, partnership at year two.</div></div>
+      <div class="f"><div class="n">docs/user-flows.md</div><div class="d">Six annotated journeys from onboarding to Retooling Passport export, with micro-interaction notes.</div></div>
+      <div class="f"><div class="n">prompts/master-build-prompt.md</div><div class="d">The single mega-prompt to hand to an AI coding agent. Self-contained, ready to paste.</div></div>
+      <div class="f"><div class="n">prompts/screen-by-screen-prompts.md</div><div class="d">Seven granular prompts (Landing, Feed, Brief, Sandbox, Ledger + PDF, Admin, Onboarding) for tools like v0 or Lovable.</div></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div>Sasa · Built in Kampala. For Ugandan teachers.</div>
+  <div class="mono">SPEC · v0.1</div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sasa · Preview v2.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     SASA · Preview v2.1
+     Warm cream + coral pops + responsive desktop
+     Source: docs/spec/design-philosophy-v2.md
+     Deviations: DEV-006 to DEV-010
+     ───────────────────────────────────────────────────────────── */
+
+  :root {
+    --cream:       #F7F2E8;
+    --cream-2:     #EEE7D7;
+    --cream-3:     #E3DAC3;
+    --paper:       #FFFCF6;
+    --ink:         #1A1612;
+    --ink-2:       #4A4239;
+    --ink-3:       #8A8174;
+    --line:        rgba(26, 22, 18, 0.09);
+
+    --coral:       #FF7F5C;
+    --coral-soft:  #FFD5C5;
+    --coral-deep:  #E25A35;
+    --peach:       #F0A878;
+    --peach-soft:  #FAE0C9;
+    --peach-deep:  #C77F4F;
+    --gold-bright: #F2B441;
+    --gold-soft:   #FCE7B5;
+    --clay:        #B85C38;
+    --sage:        #5F7A5C;
+    --sage-soft:   #C7D3BC;
+
+    --subj-chem:   #5F7A5C;
+    --subj-bio:    #4F8A6F;
+    --subj-kis:    #F0A878;
+    --subj-ict:    #6F92B8;
+    --subj-hist:   #B85C38;
+    --subj-math:   #8C76B3;
+    --subj-eng:    #C9A55C;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    background: var(--cream-3);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    text-rendering: optimizeLegibility;
+  }
+  .serif { font-family: "Fraunces", "Source Serif 4", Georgia, serif; }
+  .mono  { font-family: "JetBrains Mono", "SF Mono", ui-monospace, monospace; }
+  ::selection { background: var(--coral); color: white; }
+
+  /* Subject color attr */
+  [data-subj="chem"] { --subj: var(--subj-chem); }
+  [data-subj="bio"]  { --subj: var(--subj-bio); }
+  [data-subj="kis"]  { --subj: var(--subj-kis); }
+  [data-subj="ict"]  { --subj: var(--subj-ict); }
+  [data-subj="hist"] { --subj: var(--subj-hist); }
+  [data-subj="math"] { --subj: var(--subj-math); }
+  [data-subj="eng"]  { --subj: var(--subj-eng); }
+
+  .subj-dot {
+    display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--subj, var(--ink-3)); flex-shrink: 0;
+  }
+  .subj-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px 5px 9px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--subj, var(--ink-3)) 16%, var(--cream));
+    color: color-mix(in srgb, var(--subj, var(--ink)) 75%, var(--ink));
+    font-size: 12px; font-weight: 600;
+    letter-spacing: -0.005em; white-space: nowrap;
+  }
+  .subj-chip .subj-dot { width: 6px; height: 6px; }
+
+  .tag-coral {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--coral); color: white;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(226, 90, 53, 0.28);
+  }
+  .tag-soft {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--cream-2); color: var(--ink-2);
+    font-size: 11px; font-weight: 600;
+  }
+
+  /* Stage */
+  .stage {
+    max-width: 1340px; margin: 0 auto;
+    padding: 28px 20px 48px;
+  }
+  .stage-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 6px; padding: 0 12px;
+  }
+  .stage-head h1 {
+    font-family: "Fraunces", serif;
+    font-size: 22px; font-weight: 500; letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+  .stage-head p {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 600;
+  }
+
+  .note {
+    max-width: 760px; margin: 14px auto 0;
+    padding: 14px 18px;
+    background: var(--paper);
+    border: 0.5px solid var(--line);
+    border-radius: 12px;
+    font-size: 13.5px; color: var(--ink-2); line-height: 1.55;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .note strong { color: var(--ink); }
+  .note .mono {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    background: var(--cream-2); padding: 1px 6px; border-radius: 4px;
+  }
+  .note-coral {
+    border-left: 3px solid var(--coral);
+  }
+
+  /* View switcher (mobile vs desktop view) */
+  .view-tabs {
+    display: flex; gap: 4px;
+    margin: 22px auto 0;
+    padding: 4px;
+    background: var(--paper);
+    border-radius: 12px;
+    width: fit-content;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), inset 0 0 0 0.5px var(--line);
+  }
+  .view-tabs button {
+    background: none; border: none; cursor: pointer; font: inherit;
+    color: var(--ink-2);
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 12.5px; font-weight: 600;
+  }
+  .view-tabs button.active {
+    background: var(--ink); color: var(--cream);
+  }
+
+  /* Scene switcher */
+  .switcher {
+    display: flex; gap: 4px; flex-wrap: wrap;
+    margin: 18px auto 22px;
+    background: var(--paper);
+    padding: 4px;
+    border-radius: 14px;
+    width: fit-content;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), inset 0 0 0 0.5px var(--line);
+  }
+  .switcher button {
+    background: none; border: none; cursor: pointer; font: inherit;
+    color: var(--ink-2);
+    padding: 9px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: -0.005em;
+    transition: background 0.16s, color 0.16s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .switcher button:hover { color: var(--ink); }
+  .switcher button.active {
+    background: var(--coral); color: white;
+    box-shadow: 0 2px 6px rgba(226,90,53,0.28), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .switcher .step {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.1em;
+    color: var(--ink-3); margin-right: 2px;
+  }
+  .switcher button.active .step { color: rgba(255,255,255,0.65); }
+
+  /* ── Phones ─────────────────────────────────────────────────── */
+  .phones {
+    display: grid; grid-template-columns: 390px;
+    justify-content: center; gap: 32px;
+    margin-top: 4px;
+  }
+  @media (min-width: 920px) { .phones { grid-template-columns: repeat(2, 390px); } }
+  @media (min-width: 1340px) { .phones { grid-template-columns: repeat(3, 390px); } }
+
+  .phone {
+    width: 390px;
+    background: var(--cream);
+    border-radius: 44px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 10px #15110B,
+      0 0 0 12px #2A241A,
+      0 30px 80px rgba(0,0,0,0.18),
+      0 8px 20px rgba(0,0,0,0.08);
+    position: relative;
+  }
+  .phone-screen {
+    height: 820px;
+    overflow: hidden; position: relative;
+    display: flex; flex-direction: column;
+  }
+  .notch {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 32px;
+    background: #15110B; border-radius: 20px;
+    z-index: 60;
+  }
+  .statusbar {
+    height: 50px; padding: 14px 28px 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    font-family: -apple-system, "SF Pro Display", sans-serif;
+    font-size: 14px; font-weight: 600; color: var(--ink);
+    flex-shrink: 0; position: relative; z-index: 50;
+  }
+  .statusbar .signals { display: flex; gap: 6px; align-items: center; }
+  .statusbar .battery {
+    width: 24px; height: 12px;
+    border: 1px solid var(--ink); border-radius: 3px;
+    padding: 1px; position: relative;
+  }
+  .statusbar .battery::after {
+    content: ''; position: absolute; right: -3px; top: 3px;
+    width: 2px; height: 4px; background: var(--ink); border-radius: 1px;
+  }
+  .statusbar .battery .fill { width: 80%; height: 100%; background: var(--ink); border-radius: 1px; }
+
+  /* ── Glass (refined v2.1) ───────────────────────────────────── */
+  .glass-top, .glass-bottom {
+    background: color-mix(in srgb, var(--cream) 82%, transparent);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    backdrop-filter: blur(28px) saturate(150%);
+  }
+  .glass-top {
+    border-bottom: 0.5px solid var(--line);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.85),
+      0 1px 2px rgba(0,0,0,0.04);
+  }
+  .glass-bottom {
+    border-top: 0.5px solid var(--line);
+    box-shadow:
+      inset 0 -1px 0 rgba(255,255,255,0.85),
+      0 -1px 2px rgba(0,0,0,0.04);
+  }
+
+  .topbar {
+    height: 52px; padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    flex-shrink: 0; position: relative; z-index: 40;
+  }
+  .topbar .left, .topbar .right { flex: 1; min-width: 0; display: flex; align-items: center; }
+  .topbar .right { justify-content: flex-end; }
+  .topbar .greet { color: var(--ink-2); font-size: 14px; font-weight: 500; }
+  .topbar .center {
+    font-family: "Fraunces", serif;
+    font-size: 16px; font-weight: 500; color: var(--ink);
+  }
+  .topbar .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--cream-3);
+    border: 0.5px solid var(--line);
+    display: grid; place-items: center;
+    font-family: "Fraunces", serif;
+    font-size: 14px; font-weight: 500; color: var(--ink);
+  }
+  .topbar .icon-btn {
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    color: var(--ink-2); cursor: pointer;
+    border-radius: 50%;
+  }
+  .topbar .icon-btn:hover { background: var(--cream-2); color: var(--ink); }
+  .topbar .icon-btn svg { width: 19px; height: 19px; }
+
+  .content {
+    flex: 1; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .content::-webkit-scrollbar { width: 0; }
+
+  /* ── Bottom tab bar (coral active pill) ─────────────────────── */
+  .tabbar {
+    padding: 8px 12px 22px;
+    display: flex; justify-content: space-around;
+    flex-shrink: 0; position: relative; z-index: 40;
+  }
+  .tab {
+    flex: 1; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 8px 4px;
+    color: var(--ink-3);
+    font-size: 10.5px; font-weight: 500;
+    border-radius: 12px;
+    position: relative;
+  }
+  .tab svg { width: 19px; height: 19px; }
+  .tab.active { color: var(--ink); font-weight: 600; }
+  .tab.active svg { color: var(--coral); stroke-width: 1.9; }
+  .tab.active::before {
+    content: '';
+    position: absolute; inset: 4px 14px;
+    background: color-mix(in srgb, var(--coral) 18%, transparent);
+    border-radius: 10px; z-index: -1;
+  }
+
+  /* ── Buttons ────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 50px; padding: 0 24px;
+    border-radius: 14px;
+    font-family: inherit; font-weight: 600; font-size: 15px;
+    letter-spacing: -0.005em;
+    cursor: pointer; border: none;
+    transition: transform 0.08s, background 0.16s;
+    text-decoration: none;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--coral); color: white;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.35),
+      0 1px 2px rgba(0,0,0,0.08),
+      0 6px 16px rgba(226,90,53,0.28);
+  }
+  .btn-primary:hover { background: var(--coral-deep); }
+  .btn-full { width: 100%; }
+  .btn svg { width: 16px; height: 16px; stroke-width: 2.25; }
+
+  .card {
+    background: var(--paper);
+    border-radius: 16px;
+    border: 0.5px solid var(--line);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(26,22,18,0.05);
+  }
+
+  /* ── Feed ───────────────────────────────────────────────────── */
+  .feed-page { padding: 16px 16px 40px; }
+  .feed-card {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--paper);
+    border-radius: 16px;
+    border: 0.5px solid var(--line);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(26,22,18,0.05);
+    padding: 18px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .feed-card:active { transform: scale(0.99); }
+  .feed-card .top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .feed-card.recommended { padding: 22px; }
+  .feed-card .title {
+    font-family: "Fraunces", serif;
+    font-size: 18px; font-weight: 500;
+    line-height: 1.22; color: var(--ink);
+    margin-bottom: 8px; letter-spacing: -0.005em;
+  }
+  .feed-card.recommended .title { font-size: 26px; line-height: 1.15; margin-bottom: 12px; letter-spacing: -0.015em; }
+  .feed-card .summary {
+    font-size: 14px; color: var(--ink-2); line-height: 1.55;
+    margin-bottom: 14px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .feed-card.recommended .summary { font-size: 15.5px; margin-bottom: 18px; -webkit-line-clamp: 3; }
+  .feed-card .bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; color: var(--ink-3);
+  }
+  .feed-card .read-cta {
+    color: var(--ink); font-weight: 600; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .feed-card .read-cta svg { width: 13px; height: 13px; stroke-width: 2; }
+
+  .section-label {
+    display: flex; align-items: center; gap: 12px;
+    margin: 18px 4px 10px;
+  }
+  .section-label .lbl {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 700;
+  }
+  .section-label .rule { flex: 1; height: 1px; background: var(--line); }
+
+  /* ── Brief ──────────────────────────────────────────────────── */
+  .brief { padding: 24px 20px 56px; }
+  .brief-title {
+    font-family: "Fraunces", serif;
+    font-size: 30px; line-height: 1.1; font-weight: 500;
+    color: var(--ink); margin-top: 14px; letter-spacing: -0.018em;
+    font-variation-settings: "SOFT" 60;
+  }
+  .brief-meta {
+    font-size: 12.5px; color: var(--ink-3); margin-top: 12px;
+  }
+  .brief hr {
+    border: none; border-top: 0.5px solid var(--line); margin: 22px 0;
+  }
+  .brief h2 {
+    font-family: "Fraunces", serif;
+    font-size: 22px; font-weight: 500;
+    color: var(--ink); margin: 28px 0 10px;
+    letter-spacing: -0.008em;
+  }
+  .brief p {
+    font-family: "Fraunces", serif;
+    font-size: 18px; line-height: 1.7; color: var(--ink);
+    font-variation-settings: "SOFT" 50, "opsz" 14;
+  }
+  .brief p + p { margin-top: 14px; }
+  .brief em { font-style: italic; }
+  .brief strong { font-weight: 600; }
+
+  .highlight-quote {
+    background: var(--peach-soft);
+    border-left: 4px solid var(--coral);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin: 24px 0;
+    font-family: "Fraunces", serif;
+    font-size: 19px; line-height: 1.55; color: var(--ink);
+    font-weight: 500;
+    font-variation-settings: "SOFT" 80;
+  }
+
+  .diff {
+    margin: 24px 0;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .diff > div { border-radius: 14px; padding: 14px; }
+  .diff .before {
+    background: var(--cream-2);
+    border: 0.5px solid var(--line);
+  }
+  .diff .after {
+    background: var(--sage-soft);
+    border: 0.5px solid color-mix(in srgb, var(--sage) 30%, transparent);
+  }
+  .diff .lbl {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .diff .before .lbl { color: var(--ink-3); }
+  .diff .after .lbl  { color: color-mix(in srgb, var(--sage) 80%, var(--ink)); }
+  .diff pre {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px; line-height: 1.55;
+    white-space: pre-wrap; margin: 0;
+  }
+  .diff .before pre { color: var(--ink-2); opacity: 0.8; }
+  .diff .after pre  { color: var(--ink); }
+
+  .cta-section {
+    margin-top: 32px; padding-top: 26px;
+    border-top: 0.5px solid var(--line);
+  }
+  .cta-section .helper { font-size: 14.5px; color: var(--ink-2); margin-bottom: 14px; }
+  .ai-note {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; color: var(--ink-3);
+    margin-top: 20px; line-height: 1.55;
+  }
+
+  /* ── Sandbox (interactive) ──────────────────────────────────── */
+  .sandbox { padding: 18px 20px 56px; }
+  .progress-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 22px;
+  }
+  .progress-bar .seg {
+    flex: 1; height: 4px; border-radius: 999px;
+    background: var(--cream-3);
+    transition: background 0.3s;
+  }
+  .progress-bar .seg.done { background: var(--sage); }
+  .progress-bar .seg.current { background: var(--coral); }
+  .progress-bar .count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; color: var(--ink-3); margin-left: 6px; font-weight: 600;
+  }
+  .ex-type {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .ex-prompt {
+    background: var(--paper);
+    border: 0.5px solid var(--line);
+    border-radius: 14px; padding: 18px;
+    font-family: "Fraunces", serif;
+    font-size: 17px; line-height: 1.55; color: var(--ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .ex-ref {
+    background: var(--cream-2);
+    border-radius: 14px; padding: 16px;
+    margin-top: 14px;
+  }
+  .ex-ref .lbl {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .ex-ref p {
+    font-family: "Fraunces", serif;
+    font-style: italic; font-size: 15.5px; line-height: 1.55; color: var(--ink);
+  }
+
+  .grade-section h3 {
+    font-family: "Fraunces", serif;
+    font-size: 20px; font-weight: 500; color: var(--ink);
+    margin: 28px 0 8px; letter-spacing: -0.008em;
+  }
+  .grade-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 0;
+    border-bottom: 0.5px solid var(--line);
+  }
+  .grade-row:last-of-type { border-bottom: none; }
+  .grade-row .name { font-size: 15px; font-weight: 600; color: var(--ink); text-transform: capitalize; }
+  .grade-row .weight {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; color: var(--ink-3); margin-top: 1px; font-weight: 600;
+  }
+  .grade-row .seg-buttons { display: flex; gap: 5px; }
+  .grade-btn {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    border: 0.5px solid var(--line);
+    background: transparent; color: var(--ink-2);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .grade-btn:hover { background: var(--cream-2); }
+  .grade-btn.sel {
+    background: var(--ink); color: var(--cream);
+    border-color: var(--ink);
+    box-shadow: 0 2px 6px rgba(26,22,18,0.2);
+  }
+
+  .feedback {
+    margin-top: 24px;
+    padding: 20px;
+    border-radius: 14px;
+    background: var(--peach-soft);
+    border-left: 4px solid var(--coral);
+  }
+  .feedback .head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  }
+  .feedback .head .lbl {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-2); font-weight: 700;
+  }
+  .feedback p {
+    font-family: "Fraunces", serif;
+    font-size: 16px; line-height: 1.6; color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .feedback p:last-of-type { color: var(--ink-2); margin-bottom: 18px; }
+
+  /* ── Ledger ─────────────────────────────────────────────────── */
+  .ledger-page { padding: 22px 20px 56px; }
+  .ledger-name {
+    font-family: "Fraunces", serif;
+    font-size: 26px; font-weight: 500; letter-spacing: -0.012em;
+  }
+  .ledger-school { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+  .streak {
+    display: flex; align-items: center; gap: 14px;
+    margin: 24px 0;
+    padding: 18px;
+    background: var(--paper);
+    border-radius: 14px;
+    border: 0.5px solid var(--line);
+  }
+  .streak .saturn {
+    width: 56px; height: 56px;
+    display: grid; place-items: center; position: relative;
+    flex-shrink: 0;
+  }
+  .streak .saturn::before, .streak .saturn::after {
+    content: ""; position: absolute;
+    border: 1.5px solid var(--coral); border-radius: 50%;
+  }
+  .streak .saturn::before { width: 30px; height: 30px; opacity: 0.7; }
+  .streak .saturn::after  { width: 50px; height: 50px; opacity: 0.4; }
+  .streak .saturn .dot {
+    width: 14px; height: 14px; border-radius: 50%; background: var(--coral);
+    box-shadow: 0 0 12px rgba(255,127,92,0.4);
+  }
+  .streak .label-num {
+    font-family: "Fraunces", serif;
+    font-size: 19px; font-weight: 500;
+  }
+  .streak .label-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; line-height: 1.4; }
+  .ledger-month {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.16em;
+    color: var(--ink-3); text-transform: uppercase; font-weight: 700;
+    margin: 22px 0 6px;
+  }
+  .ledger-row {
+    display: grid; grid-template-columns: 56px 1fr auto auto;
+    gap: 12px; padding: 13px 4px;
+    border-bottom: 0.5px solid var(--line);
+    align-items: center;
+  }
+  .ledger-row .d { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--ink-3); }
+  .ledger-row .t { font-family: "Fraunces", serif; font-size: 15px; color: var(--ink); line-height: 1.3; }
+  .ledger-row .subj-dot { width: 6px; height: 6px; }
+  .ledger-row .s {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px; color: var(--sage); font-weight: 600;
+  }
+
+  /* ── Passport ───────────────────────────────────────────────── */
+  .passport-card {
+    background: var(--paper);
+    border-radius: 4px;
+    padding: 46px 42px;
+    margin: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 20px 60px rgba(0,0,0,0.10);
+    font-family: "Fraunces", serif;
+  }
+  .passport-card .head {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--coral-deep);
+    padding-bottom: 12px; border-bottom: 1px solid var(--coral-deep);
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 700;
+  }
+  .passport-card .pname {
+    font-size: 32px; font-weight: 500;
+    margin-top: 20px; letter-spacing: -0.02em;
+  }
+  .passport-card .pschool {
+    font-size: 12px; color: var(--ink-2); margin-top: 4px;
+    font-family: "Inter", sans-serif;
+  }
+  .passport-card .pstats {
+    margin-top: 24px; font-size: 11px;
+    font-family: "JetBrains Mono", monospace;
+    color: var(--ink-2); font-weight: 600;
+    padding: 10px 0;
+    border-top: 4px solid var(--coral);
+    border-bottom: 0.5px solid var(--line);
+  }
+  .passport-card table {
+    width: 100%; border-collapse: collapse; margin-top: 18px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; color: var(--ink-2);
+  }
+  .passport-card td {
+    padding: 8px 4px; border-bottom: 0.5px solid var(--line);
+    vertical-align: top;
+  }
+  .passport-card td.t {
+    font-family: "Fraunces", serif;
+    font-size: 12.5px; color: var(--ink);
+  }
+  .passport-card td.right { text-align: right; }
+  .passport-card .pfoot {
+    margin-top: 28px; text-align: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; letter-spacing: 0.1em; color: var(--ink-3);
+  }
+
+  .scene { display: none; }
+  .scene.active { display: block; }
+
+  /* Setting row */
+  .setting-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px;
+    font-size: 15.5px; color: var(--ink); font-weight: 500;
+    border-bottom: 0.5px solid var(--line);
+    cursor: pointer;
+  }
+  .setting-row:hover { background: var(--cream-2); }
+  .setting-row.last { border-bottom: none; }
+  .setting-row .hint { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  .setting-row.disabled { cursor: default; }
+  .setting-row.disabled:hover { background: transparent; }
+
+  /* ═══════════════════════════════════════════════════════════ */
+  /*  DESKTOP VIEW (DEV-007)                                     */
+  /* ═══════════════════════════════════════════════════════════ */
+
+  .desktop-mockup {
+    max-width: 1280px; margin: 0 auto;
+    background: var(--cream);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px var(--line),
+      0 30px 80px rgba(0,0,0,0.18),
+      0 12px 30px rgba(0,0,0,0.10);
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 760px;
+  }
+
+  /* Browser chrome */
+  .browser-chrome {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--cream-2);
+    border-bottom: 0.5px solid var(--line);
+  }
+  .browser-dots { display: flex; gap: 6px; }
+  .browser-dots span {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #d8d3c5;
+  }
+  .browser-dots span:nth-child(1) { background: #FF6058; }
+  .browser-dots span:nth-child(2) { background: #FEBD2F; }
+  .browser-dots span:nth-child(3) { background: #28C941; }
+  .browser-url {
+    flex: 1; margin-left: 14px;
+    height: 28px; padding: 0 12px;
+    background: var(--paper); border-radius: 7px;
+    display: flex; align-items: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px; color: var(--ink-3);
+    border: 0.5px solid var(--line);
+  }
+
+  /* Desktop sidebar */
+  .d-sidenav {
+    background: color-mix(in srgb, var(--cream) 85%, transparent);
+    backdrop-filter: blur(28px) saturate(150%);
+    border-right: 0.5px solid var(--line);
+    padding: 28px 14px 24px;
+    display: flex; flex-direction: column;
+    box-shadow: inset 1px 0 0 rgba(255,255,255,0.7);
+  }
+  .d-brand {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 0 10px; margin-bottom: 28px;
+  }
+  .d-brand-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: var(--coral); color: white;
+    display: grid; place-items: center;
+    font-family: "Fraunces", serif; font-size: 15px; font-weight: 600;
+    box-shadow: 0 2px 6px rgba(226,90,53,0.28);
+  }
+  .d-brand-name {
+    font-family: "Fraunces", serif;
+    font-size: 22px; font-weight: 500; color: var(--ink);
+    letter-spacing: -0.012em;
+  }
+  .d-nav { flex: 1; }
+  .d-nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 12px; border-radius: 12px;
+    color: var(--ink-2);
+    font-size: 14.5px; font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 2px;
+  }
+  .d-nav-item:hover { background: var(--cream-2); color: var(--ink); }
+  .d-nav-item svg { width: 18px; height: 18px; stroke-width: 1.5; }
+  .d-nav-item.active {
+    background: var(--paper); color: var(--ink); font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .d-nav-item.active svg { color: var(--coral); stroke-width: 1.9; }
+
+  .d-teaching {
+    margin-top: 16px;
+    padding: 14px;
+    background: color-mix(in srgb, var(--paper) 70%, transparent);
+    border: 0.5px solid var(--line);
+    border-radius: 12px;
+  }
+  .d-teaching .lbl {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 700; margin-bottom: 8px;
+  }
+  .d-teaching .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* Desktop main */
+  .d-main {
+    overflow-y: auto;
+    padding: 40px 48px;
+    max-height: 720px;
+  }
+  .d-main::-webkit-scrollbar { width: 8px; }
+  .d-main::-webkit-scrollbar-thumb { background: var(--cream-3); border-radius: 4px; }
+
+  .d-hero {
+    margin-bottom: 32px;
+  }
+  .d-eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 700; margin-bottom: 10px;
+  }
+  .d-h1 {
+    font-family: "Fraunces", serif;
+    font-size: 40px; line-height: 1.05; font-weight: 500;
+    color: var(--ink); letter-spacing: -0.022em;
+    max-width: 18ch;
+  }
+
+  /* Desktop feed grid */
+  .d-rec-card {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--paper);
+    border-radius: 16px;
+    border: 0.5px solid var(--line);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(26,22,18,0.05);
+    padding: 32px;
+    margin-bottom: 28px;
+    cursor: pointer;
+    transition: transform 0.12s;
+  }
+  .d-rec-card:hover { transform: translateY(-2px); }
+  .d-rec-card .top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+  }
+  .d-rec-card .title {
+    font-family: "Fraunces", serif;
+    font-size: 36px; line-height: 1.1; font-weight: 500;
+    color: var(--ink); margin-bottom: 14px;
+    letter-spacing: -0.018em; max-width: 22ch;
+  }
+  .d-rec-card .summary {
+    font-size: 17px; color: var(--ink-2); line-height: 1.55;
+    margin-bottom: 24px; max-width: 60ch;
+  }
+  .d-rec-card .bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: var(--ink-3);
+  }
+  .d-rec-card .read-cta {
+    color: var(--ink); font-weight: 600; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+
+  .d-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .d-card {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--paper);
+    border-radius: 16px;
+    border: 0.5px solid var(--line);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(26,22,18,0.05);
+    padding: 24px;
+    cursor: pointer;
+    transition: transform 0.12s;
+  }
+  .d-card:hover { transform: translateY(-2px); }
+  .d-card .top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .d-card .title {
+    font-family: "Fraunces", serif;
+    font-size: 21px; line-height: 1.22; font-weight: 500;
+    color: var(--ink); margin-bottom: 10px;
+    letter-spacing: -0.005em;
+  }
+  .d-card .summary {
+    font-size: 14.5px; color: var(--ink-2); line-height: 1.55;
+    margin-bottom: 14px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .d-card .meta { font-size: 12px; color: var(--ink-3); }
+
+  /* Desktop brief 2-col with sticky rail */
+  .d-brief {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 48px;
+    max-width: 1000px;
+  }
+  .d-brief-main { min-width: 0; }
+  .d-brief-rail .card { padding: 20px; margin-bottom: 18px; }
+  .d-brief-rail dt {
+    color: var(--ink-3); font-size: 12px; margin-bottom: 2px;
+  }
+  .d-brief-rail dd {
+    color: var(--ink); font-size: 13.5px; font-weight: 500; margin-bottom: 12px;
+  }
+  .d-brief-rail dl > div:last-child dd { margin-bottom: 0; }
+  .d-brief .brief-title {
+    font-size: 44px; max-width: 18ch;
+  }
+  .d-brief .brief p {
+    font-size: 18.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="stage-head">
+    <h1>Sasa</h1>
+    <p>Preview v2.1 · Warm + Desktop</p>
+  </div>
+
+  <div class="note note-coral">
+    <strong>v2.1 changes:</strong> brighter coral pops on CTAs and the streak indicator (DEV-006) · readability bumped. 18.5px body serif, deeper contrast (DEV-008) · refined liquid glass (DEV-010) · honest settings. dead-end rows removed (DEV-009) · <strong>new desktop layout</strong> with sidebar nav and 2-col reading rail (DEV-007). Switch between Phone and Desktop views below.
+  </div>
+
+  <div class="view-tabs" id="view-tabs">
+    <button class="active" data-view="phone">📱 Phone</button>
+    <button data-view="desktop">💻 Desktop</button>
+  </div>
+
+  <div class="switcher" id="switcher">
+    <button class="active" data-scene="feed"><span class="step">01</span>Feed</button>
+    <button data-scene="brief"><span class="step">02</span>Brief</button>
+    <button data-scene="sandbox"><span class="step">03</span>Sandbox</button>
+    <button data-scene="ledger"><span class="step">04</span>Ledger</button>
+    <button data-scene="passport"><span class="step">05</span>Passport</button>
+    <button data-scene="me"><span class="step">06</span>Profile</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PHONE VIEW                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="phone-view">
+
+  <!-- SCENE 1 · FEED -->
+  <div class="scene active" id="scene-feed">
+    <div class="phones">
+      <div class="phone"><div class="phone-screen">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span>9:41</span>
+          <div class="signals"><span style="font-size:11px;">5G</span><div class="battery"><div class="fill"></div></div></div>
+        </div>
+        <div class="glass-top topbar">
+          <div class="left"><span class="greet">Wasuze otya, Nakato.</span></div>
+          <div class="right"><div class="avatar">N</div></div>
+        </div>
+        <div class="content">
+          <div class="feed-page">
+            <div class="feed-card recommended" data-subj="chem">
+              <div class="top">
+                <span class="subj-chip"><span class="subj-dot"></span>Chemistry · S3</span>
+                <span class="tag-coral">Start here</span>
+              </div>
+              <div class="title">Construct weights revised for O-Level Chemistry</div>
+              <div class="summary">From 40/30/30 to 30/30/30/10. Application of Knowledge holds equal weight, and Values are now graded explicitly.</div>
+              <div class="bottom">
+                <span>7 min read · NCDC</span>
+                <span class="read-cta">Read it
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="section-label"><span class="lbl">More this term</span><span class="rule"></span></div>
+            <div class="feed-card" data-subj="hist">
+              <div class="top">
+                <span class="subj-chip"><span class="subj-dot"></span>History · S3, S4</span>
+                <span style="font-size:11px; color:var(--ink-3);">28 May</span>
+              </div>
+              <div class="title">History &amp; Political Education topic merge</div>
+              <div class="summary">A continuous "Power, Resistance, Identity" arc replaces the previous two-topic split.</div>
+              <div class="bottom"><span>7 min · NCDC</span></div>
+            </div>
+            <div class="feed-card" data-subj="all">
+              <div class="top">
+                <span class="subj-chip" style="--subj:var(--ink-2);"><span class="subj-dot"></span>A-Level · All</span>
+                <span style="font-size:11px; color:var(--ink-3);">3 May</span>
+              </div>
+              <div class="title">A-Level moves to A-E construct-based grading</div>
+              <div class="summary">Numerical 1-9 scores retire. Each subject is now graded across four constructs with letter descriptors.</div>
+              <div class="bottom"><span>8 min · NCDC</span></div>
+            </div>
+            <div class="feed-card" data-subj="kis">
+              <div class="top">
+                <span class="subj-chip"><span class="subj-dot"></span>Kiswahili · S1-S4</span>
+                <span style="font-size:11px; color:var(--ink-3);">18 Apr</span>
+              </div>
+              <div class="title">Official AOI sample bank released</div>
+              <div class="summary">28 new Activities of Integration with model student responses graded per construct.</div>
+              <div class="bottom"><span>6 min · NCDC</span></div>
+            </div>
+            <div class="feed-card" data-subj="ict">
+              <div class="top">
+                <span class="subj-chip"><span class="subj-dot"></span>ICT · S3, S4</span>
+                <span style="font-size:11px; color:var(--ink-3);">12 Feb</span>
+              </div>
+              <div class="title">ICT practical assessment guidelines updated</div>
+              <div class="summary">Schools without computer labs get a paper-and-walkthrough alternative. same constructs, no laptops required.</div>
+              <div class="bottom"><span>6 min · UNEB</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="glass-bottom tabbar">
+          <div class="tab active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Z"/></svg>
+            Feed
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2v7.31M14 9.3V1.99M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0"/></svg>
+            Sandbox
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+            Ledger
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+            Me
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- SCENE 2 · BRIEF -->
+  <div class="scene" id="scene-brief">
+    <div class="phones">
+      <div class="phone"><div class="phone-screen">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span>9:42</span>
+          <div class="signals"><span style="font-size:11px;">5G</span><div class="battery"><div class="fill"></div></div></div>
+        </div>
+        <div class="glass-top topbar">
+          <div class="left">
+            <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m15 18-6-6 6-6"/></svg></div>
+          </div>
+          <div class="right">
+            <div class="icon-btn" onclick="showToast('Listening coming soon.')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></div>
+            <div class="icon-btn" onclick="showToast('Saving coming soon.')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="brief" data-subj="chem">
+            <span class="subj-chip"><span class="subj-dot"></span>Chemistry · S3, S4</span>
+            <h1 class="brief-title">Construct weights revised for O-Level Chemistry</h1>
+            <div class="brief-meta">Effective July 2026 · NCDC Circular 2026/03 · Reviewed by Aisha Namaganda</div>
+            <hr/>
+            <h2>Context</h2>
+            <p>When the Lower Secondary Curriculum launched in 2020, each Chemistry assessment was weighted <strong>40% Knowledge, 30% Skill, 30% Application</strong>. Values were observed by the teacher but not separately graded.</p>
+            <h2>The Change</h2>
+            <p>From the July 2026 term, the weights are redistributed. Knowledge drops to 30%, the other three constructs balance it, and <strong>Values is now graded explicitly at 10%</strong>.</p>
+            <div class="diff">
+              <div class="before">
+                <div class="lbl">Before</div>
+                <pre>Knowledge    40%
+Skill        30%
+Application  30%
+Values   (observed)</pre>
+              </div>
+              <div class="after">
+                <div class="lbl">After · Jul 2026</div>
+                <pre>Knowledge    30%
+Skill        30%
+Application  30%
+Values       10%</pre>
+              </div>
+            </div>
+            <h2>Why</h2>
+            <p>NCDC's 2025 review found learners were over-rewarded for recalling reactions but under-rewarded for applying chemistry to real Ugandan contexts. water treatment, soap-making, fertilizer use.</p>
+            <div class="highlight-quote">
+              Lifting Application and naming Values explicitly is meant to bring the test back to the curriculum's original promise.
+            </div>
+            <h2>Classroom Example</h2>
+            <p>An S3 student writes the correct equation for the neutralization of lake-water alkalinity but does not connect it to a community problem. Under old weights: <strong>B</strong>. Under new weights: <strong>C+</strong> overall, with a clear <strong>D</strong> for Values.</p>
+            <div class="cta-section">
+              <p class="helper">You've got it. Now apply it.</p>
+              <button class="btn btn-primary btn-full" onclick="switchTo('sandbox')">Try it in the Sandbox
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              </button>
+              <div class="ai-note">Drafted by AI from NCDC Circular 2026/03. Reviewed by Aisha Namaganda. AI contribution: 0.7.</div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- SCENE 3 · SANDBOX (interactive) -->
+  <div class="scene" id="scene-sandbox">
+    <div class="phones">
+      <div class="phone"><div class="phone-screen">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span>9:48</span>
+          <div class="signals"><span style="font-size:11px;">5G</span><div class="battery"><div class="fill"></div></div></div>
+        </div>
+        <div class="glass-top topbar">
+          <div class="left">
+            <div class="icon-btn" onclick="switchTo('brief')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m15 18-6-6 6-6"/></svg></div>
+          </div>
+          <div class="center">Sandbox</div>
+          <div class="right"><span class="mono" style="font-size:10.5px; letter-spacing:0.14em; color:var(--ink-3); font-weight:600;">3 STEPS</span></div>
+        </div>
+        <div class="content">
+          <div class="sandbox" data-subj="chem">
+            <span class="subj-chip"><span class="subj-dot"></span>Chemistry · S3</span>
+            <h2 style="font-family:Fraunces, serif; font-size:24px; font-weight:500; line-height:1.15; margin-top:12px; margin-bottom:20px; letter-spacing:-0.014em;">Construct weights revised for O-Level Chemistry</h2>
+
+            <div class="progress-bar">
+              <div class="seg current"></div>
+              <div class="seg"></div>
+              <div class="seg"></div>
+              <span class="count">1/3</span>
+            </div>
+
+            <div class="ex-type">Re-grade · ~4 min</div>
+            <div class="ex-prompt">
+              A real S3 student wrote the response below. Apply the NEW construct weights (30/30/30/10) and grade each construct A-E.
+            </div>
+
+            <div class="ex-ref">
+              <div class="lbl">Student response</div>
+              <p>"Sodium hydroxide reacts with hydrochloric acid to form sodium chloride and water. The equation is NaOH + HCl → NaCl + H₂O. This is a neutralization reaction because a strong base reacts with a strong acid."</p>
+            </div>
+
+            <div class="grade-section" id="grade-section">
+              <h3>Grade each construct</h3>
+              <div class="grade-row">
+                <div><div class="name">Knowledge</div><div class="weight">30% weight</div></div>
+                <div class="seg-buttons" data-construct="knowledge">
+                  <button class="grade-btn" data-grade="A">A</button><button class="grade-btn" data-grade="B">B</button><button class="grade-btn" data-grade="C">C</button><button class="grade-btn" data-grade="D">D</button><button class="grade-btn" data-grade="E">E</button>
+                </div>
+              </div>
+              <div class="grade-row">
+                <div><div class="name">Skill</div><div class="weight">30% weight</div></div>
+                <div class="seg-buttons" data-construct="skill">
+                  <button class="grade-btn" data-grade="A">A</button><button class="grade-btn" data-grade="B">B</button><button class="grade-btn" data-grade="C">C</button><button class="grade-btn" data-grade="D">D</button><button class="grade-btn" data-grade="E">E</button>
+                </div>
+              </div>
+              <div class="grade-row">
+                <div><div class="name">Application</div><div class="weight">30% weight</div></div>
+                <div class="seg-buttons" data-construct="application">
+                  <button class="grade-btn" data-grade="A">A</button><button class="grade-btn" data-grade="B">B</button><button class="grade-btn" data-grade="C">C</button><button class="grade-btn" data-grade="D">D</button><button class="grade-btn" data-grade="E">E</button>
+                </div>
+              </div>
+              <div class="grade-row">
+                <div><div class="name">Values</div><div class="weight">10% weight</div></div>
+                <div class="seg-buttons" data-construct="values">
+                  <button class="grade-btn" data-grade="A">A</button><button class="grade-btn" data-grade="B">B</button><button class="grade-btn" data-grade="C">C</button><button class="grade-btn" data-grade="D">D</button><button class="grade-btn" data-grade="E">E</button>
+                </div>
+              </div>
+              <button id="submit-btn" class="btn btn-primary btn-full" style="margin-top:24px; opacity:0.5; cursor:not-allowed;" disabled>Submit grade</button>
+            </div>
+
+            <div id="feedback" class="feedback" style="display:none;">
+              <div class="head">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span class="lbl">Recorded</span>
+              </div>
+              <p>NCDC says: <em>"A response that links the chemical equation to a real-world Ugandan application earns B or higher in Application."</em></p>
+              <p>This student wrote a textbook neutralization without any link to context. The new 10% weight on Values means responses that don't reflect on responsible use will pull the final grade noticeably.</p>
+              <button class="btn btn-primary btn-full" onclick="alert('In the real app this moves to exercise 2 of 3')">Next exercise
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- SCENE 4 · LEDGER -->
+  <div class="scene" id="scene-ledger">
+    <div class="phones">
+      <div class="phone"><div class="phone-screen">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span>9:55</span>
+          <div class="signals"><span style="font-size:11px;">5G</span><div class="battery"><div class="fill"></div></div></div>
+        </div>
+        <div class="glass-top topbar">
+          <div class="left"></div>
+          <div class="center">Ledger</div>
+          <div class="right"></div>
+        </div>
+        <div class="content">
+          <div class="ledger-page">
+            <div class="ledger-name">Nakato Sarah</div>
+            <div class="ledger-school">St. Mary's College Kisubi · Wakiso District</div>
+            <div class="streak">
+              <div class="saturn"><div class="dot"></div></div>
+              <div>
+                <div class="label-num">47 weeks current</div>
+                <div class="label-sub">Keep going. You're in the top 8% of teachers retooling weekly.</div>
+              </div>
+            </div>
+            <div class="ledger-month">June 2026</div>
+            <div class="ledger-row" data-subj="chem"><span class="d">14 Jun</span><span class="t">Construct weights revised. Chemistry</span><span class="subj-dot"></span><span class="s">92%</span></div>
+            <div class="ledger-row" data-subj="bio"><span class="d">07 Jun</span><span class="t">New AOI design checklist. Biology</span><span class="subj-dot"></span><span class="s">88%</span></div>
+            <div class="ledger-month">May 2026</div>
+            <div class="ledger-row" data-subj="hist"><span class="d">28 May</span><span class="t">History &amp; PE topic merge</span><span class="subj-dot"></span><span class="s">79%</span></div>
+            <div class="ledger-row" data-subj="kis"><span class="d">14 May</span><span class="t">Kiswahili AOI sample bank</span><span class="subj-dot"></span><span class="s">84%</span></div>
+            <div class="ledger-row" data-subj="all"><span class="d">03 May</span><span class="t">A-Level grading transition. A-E descriptors</span><span class="subj-dot" style="background:var(--ink-2);"></span><span class="s">90%</span></div>
+            <button class="btn btn-primary btn-full" style="margin-top:24px;" onclick="switchTo('passport')">
+              Export Retooling Passport
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="glass-bottom tabbar">
+          <div class="tab" onclick="switchTo('feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Z"/></svg>Feed</div>
+          <div class="tab" onclick="switchTo('sandbox')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2v7.31M14 9.3V1.99M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0"/></svg>Sandbox</div>
+          <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Ledger</div>
+          <div class="tab" onclick="switchTo('me')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>Me</div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- SCENE 5 · PASSPORT -->
+  <div class="scene" id="scene-passport">
+    <div style="max-width: 560px; margin: 0 auto;">
+      <div class="note" style="text-align:center; margin-bottom: 8px;">
+        The <strong>Retooling Passport</strong>. generated as a PDF when a teacher taps Export on the Ledger. Typeset like a university transcript, meant to be printed or sent to a head teacher.
+      </div>
+      <div class="passport-card">
+        <div class="head"><span>RETOOLING PASSPORT</span><span>SASA · 2026</span></div>
+        <div class="pname">Nakato Sarah</div>
+        <div class="pschool">St. Mary's College Kisubi · Wakiso District · Teacher of Chemistry &amp; Biology · S2-S4</div>
+        <div class="pstats">47 UPDATES INTERNALIZED · AVG ALIGNMENT 84% · STREAK 47 WEEKS</div>
+        <table>
+          <tr><td>14 Jun 2026</td><td class="t">Construct weights revised. O-Level Chemistry</td><td class="right">92%</td></tr>
+          <tr><td>07 Jun 2026</td><td class="t">New AOI design checklist. S2 Biology</td><td class="right">88%</td></tr>
+          <tr><td>28 May 2026</td><td class="t">History &amp; PE topic merge</td><td class="right">79%</td></tr>
+          <tr><td>14 May 2026</td><td class="t">Kiswahili AOI sample bank</td><td class="right">84%</td></tr>
+          <tr><td>03 May 2026</td><td class="t">A-Level grading transition. A-E descriptors</td><td class="right">90%</td></tr>
+        </table>
+        <div class="pfoot">ISSUED BY SASA · SASA.UG · 20 JUNE 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 6 · ME -->
+  <div class="scene" id="scene-me">
+    <div class="phones">
+      <div class="phone"><div class="phone-screen">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span>10:02</span>
+          <div class="signals"><span style="font-size:11px;">5G</span><div class="battery"><div class="fill"></div></div></div>
+        </div>
+        <div class="glass-top topbar">
+          <div class="left"></div>
+          <div class="center">Profile</div>
+          <div class="right"></div>
+        </div>
+        <div class="content">
+          <div style="padding: 24px 20px 56px;">
+            <div style="text-align: center; margin-bottom: 28px;">
+              <div style="width:80px; height:80px; border-radius:50%; background:var(--cream-3); display:grid; place-items:center; font-family:Fraunces, serif; font-size:34px; font-weight:500; color:var(--ink); margin:0 auto 14px;">N</div>
+              <div style="font-family:Fraunces, serif; font-size:24px; font-weight:500; letter-spacing:-0.01em;">Nakato Sarah</div>
+              <div style="font-size:13.5px; color:var(--ink-3); margin-top:4px;">St. Mary's College Kisubi · Wakiso</div>
+            </div>
+
+            <div class="card" style="padding: 20px; margin-bottom: 20px;">
+              <div class="mono" style="font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-3); font-weight:700; margin-bottom:12px;">What I teach</div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <span class="subj-chip" data-subj="chem"><span class="subj-dot"></span>Chemistry · S2-S4</span>
+                <span class="subj-chip" data-subj="bio"><span class="subj-dot"></span>Biology · S2-S4</span>
+              </div>
+            </div>
+
+            <!-- Honest settings (DEV-009) -->
+            <div class="card" style="overflow:hidden;">
+              <div class="setting-row">Subjects &amp; grades</div>
+              <div class="setting-row">Greeting language <span class="hint">Luganda</span></div>
+              <div class="setting-row last">Sign out</div>
+            </div>
+
+            <p class="mono" style="font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-3); font-weight:700; margin: 22px 4px 10px;">Coming soon</p>
+            <div class="card" style="overflow:hidden; opacity:0.7;">
+              <div class="setting-row disabled">Download for offline <span class="hint">Phase F</span></div>
+              <div class="setting-row disabled">Notifications <span class="hint">Phase F</span></div>
+              <div class="setting-row disabled last">Export Retooling Passport <span class="hint">Phase E</span></div>
+            </div>
+
+            <p style="text-align:center; font-family:Fraunces, serif; font-style:italic; font-size:13px; color:var(--ink-3); margin-top:22px;">Sasa v0.2 · Built in Kampala</p>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  </div><!-- /#phone-view -->
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- DESKTOP VIEW                                                -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="desktop-view" style="display:none;">
+
+  <div id="d-scene-feed" class="scene active">
+    <div class="desktop-mockup">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">sasa.ug/feed</div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="d-sidenav">
+        <div class="d-brand">
+          <div class="d-brand-icon">S</div>
+          <div class="d-brand-name">Sasa</div>
+        </div>
+        <nav class="d-nav">
+          <div class="d-nav-item active" onclick="switchTo('feed')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Z"/></svg>
+            Feed
+          </div>
+          <div class="d-nav-item" onclick="switchTo('sandbox')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 2v7.31M14 9.3V1.99M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0"/></svg>
+            Sandbox
+          </div>
+          <div class="d-nav-item" onclick="switchTo('ledger')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+            Ledger
+          </div>
+          <div class="d-nav-item" onclick="switchTo('me')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+            Profile
+          </div>
+        </nav>
+        <div class="d-teaching">
+          <div class="lbl">Nakato · Teaching</div>
+          <div class="chips">
+            <span class="subj-chip" data-subj="chem"><span class="subj-dot"></span>Chemistry</span>
+            <span class="subj-chip" data-subj="bio"><span class="subj-dot"></span>Biology</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="d-main">
+        <div class="d-hero">
+          <div class="d-eyebrow">Wasuze otya, Nakato.</div>
+          <h1 class="d-h1">What's new in the curriculum.</h1>
+        </div>
+
+        <div class="d-rec-card" data-subj="chem">
+          <div class="top">
+            <span class="subj-chip"><span class="subj-dot"></span>Chemistry · S3</span>
+            <span class="tag-coral">Start here</span>
+          </div>
+          <div class="title">Construct weights revised for O-Level Chemistry</div>
+          <div class="summary">From 40/30/30 to 30/30/30/10. Application of Knowledge holds equal weight, and Values are now graded explicitly. Effective July 2026.</div>
+          <div class="bottom">
+            <span>7 min read · NCDC Circular 2026/03</span>
+            <span class="read-cta">Read it
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-bottom:14px;">
+          <span class="lbl">More this term</span>
+          <span class="rule"></span>
+        </div>
+
+        <div class="d-grid">
+          <div class="d-card" data-subj="hist">
+            <div class="top">
+              <span class="subj-chip"><span class="subj-dot"></span>History · S3, S4</span>
+              <span style="font-size:11.5px; color:var(--ink-3);">28 May</span>
+            </div>
+            <div class="title">History &amp; PE topic merge</div>
+            <div class="summary">A continuous "Power, Resistance, Identity" arc replaces the previous two-topic split. New thematic teaching approach.</div>
+            <div class="meta">7 min · NCDC</div>
+          </div>
+          <div class="d-card" data-subj="all">
+            <div class="top">
+              <span class="subj-chip" style="--subj:var(--ink-2);"><span class="subj-dot"></span>A-Level · All</span>
+              <span style="font-size:11.5px; color:var(--ink-3);">3 May</span>
+            </div>
+            <div class="title">A-Level moves to A-E grading</div>
+            <div class="summary">Numerical 1-9 scores retire. Each subject is now graded across four constructs with letter descriptors.</div>
+            <div class="meta">8 min · NCDC</div>
+          </div>
+          <div class="d-card" data-subj="kis">
+            <div class="top">
+              <span class="subj-chip"><span class="subj-dot"></span>Kiswahili · S1-S4</span>
+              <span style="font-size:11.5px; color:var(--ink-3);">18 Apr</span>
+            </div>
+            <div class="title">Official AOI sample bank</div>
+            <div class="summary">28 new Activities of Integration with model student responses graded per construct.</div>
+            <div class="meta">6 min · NCDC</div>
+          </div>
+          <div class="d-card" data-subj="ict">
+            <div class="top">
+              <span class="subj-chip"><span class="subj-dot"></span>ICT · S3, S4</span>
+              <span style="font-size:11.5px; color:var(--ink-3);">12 Feb</span>
+            </div>
+            <div class="title">ICT practical guidelines updated</div>
+            <div class="summary">Schools without computer labs get a paper-and-walkthrough alternative. same constructs.</div>
+            <div class="meta">6 min · UNEB</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="d-scene-brief" class="scene">
+    <div class="desktop-mockup">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">sasa.ug/feed/chemistry-construct-weights-jun-2026</div>
+      </div>
+      <aside class="d-sidenav">
+        <div class="d-brand"><div class="d-brand-icon">S</div><div class="d-brand-name">Sasa</div></div>
+        <nav class="d-nav">
+          <div class="d-nav-item active" onclick="switchTo('feed')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Z"/></svg>Feed</div>
+          <div class="d-nav-item" onclick="switchTo('sandbox')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 2v7.31M14 9.3V1.99M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0"/></svg>Sandbox</div>
+          <div class="d-nav-item" onclick="switchTo('ledger')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Ledger</div>
+          <div class="d-nav-item" onclick="switchTo('me')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>Profile</div>
+        </nav>
+        <div class="d-teaching">
+          <div class="lbl">Nakato · Teaching</div>
+          <div class="chips">
+            <span class="subj-chip" data-subj="chem"><span class="subj-dot"></span>Chemistry</span>
+            <span class="subj-chip" data-subj="bio"><span class="subj-dot"></span>Biology</span>
+          </div>
+        </div>
+      </aside>
+      <main class="d-main">
+        <div style="font-size:13.5px; color:var(--ink-3); margin-bottom:24px; cursor:pointer;" onclick="switchTo('feed')">← Back to Feed</div>
+        <div class="d-brief brief" data-subj="chem">
+          <div class="d-brief-main">
+            <span class="subj-chip"><span class="subj-dot"></span>Chemistry · S3, S4</span>
+            <h1 class="brief-title" style="margin-top:16px;">Construct weights revised for O-Level Chemistry</h1>
+            <div class="brief-meta">Effective July 2026 · NCDC Circular 2026/03 · Reviewed by Aisha Namaganda</div>
+            <hr style="margin: 28px 0;"/>
+            <h2>Context</h2>
+            <p>When the Lower Secondary Curriculum launched in 2020, each Chemistry assessment was weighted <strong>40% Knowledge, 30% Skill, 30% Application</strong>. Values were observed by the teacher but not separately graded.</p>
+            <h2>The Change</h2>
+            <p>From the July 2026 term, the weights are redistributed. Knowledge drops to 30%, the other three constructs balance it, and <strong>Values is now graded explicitly at 10%</strong>.</p>
+            <div class="diff">
+              <div class="before">
+                <div class="lbl">Before</div>
+                <pre>Knowledge    40%
+Skill        30%
+Application  30%
+Values   (observed)</pre>
+              </div>
+              <div class="after">
+                <div class="lbl">After · Jul 2026</div>
+                <pre>Knowledge    30%
+Skill        30%
+Application  30%
+Values       10%</pre>
+              </div>
+            </div>
+            <h2>Why</h2>
+            <p>NCDC's 2025 review found learners were over-rewarded for recalling reactions but under-rewarded for applying chemistry to real Ugandan contexts.</p>
+            <div class="highlight-quote">
+              Lifting Application and naming Values explicitly is meant to bring the test back to the curriculum's original promise.
+            </div>
+            <div class="cta-section">
+              <p class="helper">You've got it. Now apply it.</p>
+              <button class="btn btn-primary" onclick="switchTo('sandbox')">Try it in the Sandbox
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              </button>
+              <div class="ai-note">Drafted by AI from NCDC Circular 2026/03. Reviewed by Aisha Namaganda. AI contribution: 0.7.</div>
+            </div>
+          </div>
+
+          <aside class="d-brief-rail">
+            <div class="card">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink-3); font-weight:700; margin-bottom:14px;">This Brief</div>
+              <dl>
+                <div><dt>Reading time</dt><dd>7 minutes</dd></div>
+                <div><dt>Effective</dt><dd>July 2026</dd></div>
+                <div><dt>Issued by</dt><dd>NCDC</dd></div>
+                <div><dt>Affects</dt><dd>Chemistry · S3, S4</dd></div>
+              </dl>
+            </div>
+            <div class="card">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink-3); font-weight:700; margin-bottom:12px;">Actions</div>
+              <div style="display:flex; align-items:center; gap:10px; padding:6px 0; font-size:13.5px; color:var(--ink-2); cursor:pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
+                Listen instead
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; padding:6px 0; font-size:13.5px; color:var(--ink-2); cursor:pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                Save for later
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="d-scene-sandbox" class="scene">
+    <div class="desktop-mockup">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">sasa.ug/feed/chemistry-.../sandbox</div>
+      </div>
+      <aside class="d-sidenav">
+        <div class="d-brand"><div class="d-brand-icon">S</div><div class="d-brand-name">Sasa</div></div>
+        <nav class="d-nav">
+          <div class="d-nav-item" onclick="switchTo('feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Z"/></svg>Feed</div>
+          <div class="d-nav-item active" onclick="switchTo('sandbox')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 2v7.31M14 9.3V1.99M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0"/></svg>Sandbox</div>
+          <div class="d-nav-item" onclick="switchTo('ledger')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Ledger</div>
+          <div class="d-nav-item" onclick="switchTo('me')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>Profile</div>
+        </nav>
+        <div class="d-teaching">
+          <div class="lbl">Nakato · Teaching</div>
+          <div class="chips">
+            <span class="subj-chip" data-subj="chem"><span class="subj-dot"></span>Chemistry</span>
+            <span class="subj-chip" data-subj="bio"><span class="subj-dot"></span>Biology</span>
+          </div>
+        </div>
+      </aside>
+      <main class="d-main">
+        <div style="max-width:680px;">
+          <div style="font-size:13.5px; color:var(--ink-3); margin-bottom:24px; cursor:pointer;" onclick="switchTo('brief')">← Back to Brief</div>
+          <span class="subj-chip" data-subj="chem"><span class="subj-dot"></span>Chemistry · S3</span>
+          <h1 style="font-family:Fraunces, serif; font-size:34px; font-weight:500; line-height:1.15; margin-top:14px; margin-bottom:28px; letter-spacing:-0.018em;">Construct weights revised for O-Level Chemistry</h1>
+          <div class="progress-bar">
+            <div class="seg current"></div><div class="seg"></div><div class="seg"></div>
+            <span class="count">1/3</span>
+          </div>
+          <div class="ex-type">Re-grade · ~4 min</div>
+          <div class="ex-prompt">A real S3 student wrote the response below. Apply the NEW construct weights (30/30/30/10) and grade each construct A-E.</div>
+          <div class="ex-ref">
+            <div class="lbl">Student response</div>
+            <p>"Sodium hydroxide reacts with hydrochloric acid to form sodium chloride and water. The equation is NaOH + HCl → NaCl + H₂O. This is a neutralization reaction because a strong base reacts with a strong acid."</p>
+          </div>
+          <div class="grade-section">
+            <h3>Grade each construct</h3>
+            <div class="grade-row"><div><div class="name">Knowledge</div><div class="weight">30% weight</div></div><div class="seg-buttons" data-construct="d-knowledge"><button class="grade-btn" data-grade="A">A</button><button class="grade-btn" data-grade="B">B</button><button class="grade-btn" data-grade="C">C</button><button class="grade-btn" data-grade="D">D</button><button class="grade-btn" data-grade="E">E</button></div></div>
+            <div class="grade-row"><div><div class="name">Skill</div><div class="weight">30% weight</div></div><div class="seg-buttons" data-construct="d-skill"><button class="grade-btn" data-grade="A">A</button><button class="grade-btn" data-grade="B">B</button><button class="grade-btn" data-grade="C">C</button><button class="grade-btn" data-grade="D">D</button><button class="grade-btn" data-grade="E">E</button></div></div>
+            <div class="grade-row"><div><div class="name">Application</div><div class="weight">30% weight</div></div><div class="seg-buttons" data-construct="d-application"><button class="grade-btn" data-grade="A">A</button><button class="grade-btn" data-grade="B">B</button><button class="grade-btn" data-grade="C">C</button><button class="grade-btn" data-grade="D">D</button><button class="grade-btn" data-grade="E">E</button></div></div>
+            <div class="grade-row"><div><div class="name">Values</div><div class="weight">10% weight</div></div><div class="seg-buttons" data-construct="d-values"><button class="grade-btn" data-grade="A">A</button><button class="grade-btn" data-grade="B">B</button><button class="grade-btn" data-grade="C">C</button><button class="grade-btn" data-grade="D">D</button><button class="grade-btn" data-grade="E">E</button></div></div>
+            <button id="d-submit-btn" class="btn btn-primary" style="margin-top:28px; opacity:0.5; cursor:not-allowed;" disabled>Submit grade</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="d-scene-ledger" class="scene">
+    <div class="desktop-mockup">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">sasa.ug/ledger</div>
+      </div>
+      <aside class="d-sidenav">
+        <div class="d-brand"><div class="d-brand-icon">S</div><div class="d-brand-name">Sasa</div></div>
+        <nav class="d-nav">
+          <div class="d-nav-item" onclick="switchTo('feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Z"/></svg>Feed</div>
+          <div class="d-nav-item" onclick="switchTo('sandbox')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 2v7.31M14 9.3V1.99M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0"/></svg>Sandbox</div>
+          <div class="d-nav-item active" onclick="switchTo('ledger')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 5H20"/></svg>Ledger</div>
+          <div class="d-nav-item" onclick="switchTo('me')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>Profile</div>
+        </nav>
+        <div class="d-teaching">
+          <div class="lbl">Nakato · Teaching</div>
+          <div class="chips">
+            <span class="subj-chip" data-subj="chem"><span class="subj-dot"></span>Chemistry</span>
+            <span class="subj-chip" data-subj="bio"><span class="subj-dot"></span>Biology</span>
+          </div>
+        </div>
+      </aside>
+      <main class="d-main">
+        <div class="d-eyebrow">Your record</div>
+        <h1 class="d-h1" style="margin-bottom:14px;">Your retooling record.</h1>
+        <p style="font-family:Fraunces, serif; font-size:18px; color:var(--ink-2); line-height:1.6; max-width:58ch; margin-bottom:36px;">Every Brief you read and Sandbox you complete shows up here. Export it as a Retooling Passport. a PDF you can hand to your head teacher.</p>
+
+        <div class="streak" style="max-width:520px; margin-bottom:36px;">
+          <div class="saturn"><div class="dot"></div></div>
+          <div>
+            <div class="label-num">47 weeks current</div>
+            <div class="label-sub">Keep going. You're in the top 8% of teachers retooling weekly.</div>
+          </div>
+        </div>
+
+        <div style="max-width:680px;">
+          <div class="ledger-month">June 2026</div>
+          <div class="ledger-row" data-subj="chem"><span class="d">14 Jun</span><span class="t">Construct weights revised. Chemistry</span><span class="subj-dot"></span><span class="s">92%</span></div>
+          <div class="ledger-row" data-subj="bio"><span class="d">07 Jun</span><span class="t">New AOI design checklist. Biology</span><span class="subj-dot"></span><span class="s">88%</span></div>
+
+          <div class="ledger-month">May 2026</div>
+          <div class="ledger-row" data-subj="hist"><span class="d">28 May</span><span class="t">History &amp; PE topic merge</span><span class="subj-dot"></span><span class="s">79%</span></div>
+          <div class="ledger-row" data-subj="kis"><span class="d">14 May</span><span class="t">Kiswahili AOI sample bank</span><span class="subj-dot"></span><span class="s">84%</span></div>
+          <div class="ledger-row" data-subj="all"><span class="d">03 May</span><span class="t">A-Level grading transition</span><span class="subj-dot" style="background:var(--ink-2);"></span><span class="s">90%</span></div>
+
+          <button class="btn btn-primary" style="margin-top:28px;" onclick="switchTo('passport')">
+            Export Retooling Passport
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          </button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="d-scene-passport" class="scene">
+    <div class="desktop-mockup" style="grid-template-columns: 1fr; min-height: auto;">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">sasa.ug/ledger/export</div>
+      </div>
+      <main style="padding: 40px; background: var(--cream-3); display: grid; place-items: center; min-height: 700px;">
+        <div style="max-width: 600px;">
+          <div class="passport-card">
+            <div class="head"><span>RETOOLING PASSPORT</span><span>SASA · 2026</span></div>
+            <div class="pname">Nakato Sarah</div>
+            <div class="pschool">St. Mary's College Kisubi · Wakiso District · Teacher of Chemistry &amp; Biology · S2-S4</div>
+            <div class="pstats">47 UPDATES INTERNALIZED · AVG ALIGNMENT 84% · STREAK 47 WEEKS</div>
+            <table>
+              <tr><td>14 Jun 2026</td><td class="t">Construct weights revised. O-Level Chemistry</td><td class="right">92%</td></tr>
+              <tr><td>07 Jun 2026</td><td class="t">New AOI design checklist. S2 Biology</td><td class="right">88%</td></tr>
+              <tr><td>28 May 2026</td><td class="t">History &amp; PE topic merge</td><td class="right">79%</td></tr>
+              <tr><td>14 May 2026</td><td class="t">Kiswahili AOI sample bank</td><td class="right">84%</td></tr>
+              <tr><td>03 May 2026</td><td class="t">A-Level grading transition</td><td class="right">90%</td></tr>
+            </table>
+            <div class="pfoot">ISSUED BY SASA · SASA.UG · 20 JUNE 2026</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="d-scene-me" class="scene">
+    <div class="desktop-mockup">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">sasa.ug/me</div>
+      </div>
+      <aside class="d-sidenav">
+        <div class="d-brand"><div class="d-brand-icon">S</div><div class="d-brand-name">Sasa</div></div>
+        <nav class="d-nav">
+          <div class="d-nav-item" onclick="switchTo('feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Z"/></svg>Feed</div>
+          <div class="d-nav-item" onclick="switchTo('sandbox')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 2v7.31M14 9.3V1.99M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0"/></svg>Sandbox</div>
+          <div class="d-nav-item" onclick="switchTo('ledger')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Ledger</div>
+          <div class="d-nav-item active" onclick="switchTo('me')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>Profile</div>
+        </nav>
+        <div class="d-teaching">
+          <div class="lbl">Nakato · Teaching</div>
+          <div class="chips">
+            <span class="subj-chip" data-subj="chem"><span class="subj-dot"></span>Chemistry</span>
+            <span class="subj-chip" data-subj="bio"><span class="subj-dot"></span>Biology</span>
+          </div>
+        </div>
+      </aside>
+      <main class="d-main">
+        <div style="max-width: 620px;">
+          <div style="text-align: center; margin-bottom: 36px;">
+            <div style="width:96px; height:96px; border-radius:50%; background:var(--cream-3); display:grid; place-items:center; font-family:Fraunces, serif; font-size:42px; font-weight:500; color:var(--ink); margin:0 auto 16px;">N</div>
+            <div style="font-family:Fraunces, serif; font-size:30px; font-weight:500; letter-spacing:-0.012em;">Nakato Sarah</div>
+            <div style="font-size:14px; color:var(--ink-3); margin-top:6px;">St. Mary's College Kisubi · Wakiso</div>
+          </div>
+
+          <div class="card" style="padding: 22px; margin-bottom: 22px;">
+            <div class="mono" style="font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-3); font-weight:700; margin-bottom:14px;">What I teach</div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span class="subj-chip" data-subj="chem"><span class="subj-dot"></span>Chemistry · S2-S4</span>
+              <span class="subj-chip" data-subj="bio"><span class="subj-dot"></span>Biology · S2-S4</span>
+            </div>
+          </div>
+
+          <div class="card" style="overflow:hidden;">
+            <div class="setting-row">Subjects &amp; grades</div>
+            <div class="setting-row">Greeting language <span class="hint">Luganda</span></div>
+            <div class="setting-row last">Sign out</div>
+          </div>
+
+          <p class="mono" style="font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-3); font-weight:700; margin: 24px 4px 10px;">Coming soon</p>
+          <div class="card" style="overflow:hidden; opacity:0.7;">
+            <div class="setting-row disabled">Download for offline <span class="hint">Phase F</span></div>
+            <div class="setting-row disabled">Notifications <span class="hint">Phase F</span></div>
+            <div class="setting-row disabled last">Export Retooling Passport <span class="hint">Phase E</span></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  </div><!-- /#desktop-view -->
+
+</div>
+
+<script>
+  const viewButtons = document.querySelectorAll('#view-tabs button');
+  const phoneView = document.getElementById('phone-view');
+  const desktopView = document.getElementById('desktop-view');
+
+  viewButtons.forEach(btn => btn.addEventListener('click', () => {
+    viewButtons.forEach(b => b.classList.toggle('active', b === btn));
+    const isDesktop = btn.dataset.view === 'desktop';
+    phoneView.style.display = isDesktop ? 'none' : 'block';
+    desktopView.style.display = isDesktop ? 'block' : 'none';
+  }));
+
+  // Toast (Coming Soon, DEV-014)
+  function showToast(msg) {
+    let t = document.getElementById('sasa-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'sasa-toast';
+      t.style.cssText = 'position:fixed; left:50%; bottom:48px; transform:translateX(-50%); padding:10px 18px; border-radius:999px; background:var(--ink); color:var(--cream); font-size:13.5px; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,0.22); z-index:9999; pointer-events:none; opacity:0; transition:opacity 0.18s;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.style.opacity = '0'; }, 1700);
+  }
+  window.showToast = showToast;
+
+  const sceneButtons = document.querySelectorAll('#switcher button');
+  function switchTo(name) {
+    sceneButtons.forEach(b => b.classList.toggle('active', b.dataset.scene === name));
+    document.querySelectorAll('#phone-view .scene').forEach(s => s.classList.toggle('active', s.id === 'scene-' + name));
+    document.querySelectorAll('#desktop-view .scene').forEach(s => s.classList.toggle('active', s.id === 'd-scene-' + name));
+    window.scrollTo({ top: document.querySelector('.switcher').offsetTop - 16, behavior: 'smooth' });
+  }
+  sceneButtons.forEach(btn => btn.addEventListener('click', () => switchTo(btn.dataset.scene)));
+
+  document.addEventListener('keydown', (e) => {
+    const order = ['feed','brief','sandbox','ledger','passport','me'];
+    const active = document.querySelector('#switcher button.active').dataset.scene;
+    const i = order.indexOf(active);
+    if (e.key === 'ArrowRight' && i < order.length - 1) switchTo(order[i+1]);
+    if (e.key === 'ArrowLeft'  && i > 0)                switchTo(order[i-1]);
+  });
+
+  // Interactive grade buttons (both phone and desktop sandbox)
+  function wireGrades(submitBtnId, prefix) {
+    const grades = {};
+    document.querySelectorAll(`.seg-buttons[data-construct^="${prefix}"]`).forEach(group => {
+      const c = group.dataset.construct;
+      grades[c] = null;
+      group.querySelectorAll('.grade-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('sel'));
+          btn.classList.add('sel');
+          grades[c] = btn.dataset.grade;
+          const all = Object.values(grades).every(g => g !== null);
+          const sb = document.getElementById(submitBtnId);
+          if (all && sb) { sb.disabled = false; sb.style.opacity='1'; sb.style.cursor='pointer'; }
+        });
+      });
+    });
+  }
+  // Phone sandbox uses bare construct names; desktop uses d- prefix
+  wireGrades('submit-btn', '');
+  wireGrades('d-submit-btn', 'd-');
+
+  document.getElementById('submit-btn').addEventListener('click', () => {
+    document.getElementById('grade-section').style.display = 'none';
+    document.getElementById('feedback').style.display = 'block';
+  });
+  document.getElementById('d-submit-btn').addEventListener('click', () => {
+    alert('Desktop preview: in the real app, citation-first feedback would appear inline here.');
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,374 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   SASA · Design Tokens (v2.1)
+   Source of truth: /docs/spec/design-philosophy-v2.md
+   Recent deviations: DEV-006 (brighter pops), DEV-008 (readability),
+                       DEV-010 (refined glass)
+   Rule: change tokens here, never inline.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  /* Foundation — warm and inviting */
+  --cream:       #F7F2E8;
+  --cream-2:     #EEE7D7;
+  --cream-3:     #E3DAC3;
+  --paper:       #FFFCF6;
+
+  /* Ink — deeper contrast for readability (DEV-008) */
+  --ink:         #1A1612;     /* was #1F1B16 */
+  --ink-2:       #4A4239;     /* was #5C544A — stronger secondary contrast */
+  --ink-3:       #8A8174;     /* slightly warmer tertiary */
+
+  /* Lines */
+  --line:        rgba(26, 22, 18, 0.09);
+  --line-2:      rgba(26, 22, 18, 0.05);
+
+  /* Accents — v2.1 brighter pops (DEV-006) */
+  --coral:       #FF7F5C;     /* NEW — the "do this now" pop */
+  --coral-soft:  #FFD5C5;     /* hover/secondary surface */
+  --coral-deep:  #E25A35;     /* pressed-active */
+
+  --peach:       #F0A878;     /* slightly more saturated than v2's #E8A87C */
+  --peach-soft:  #FAE0C9;
+  --peach-deep:  #C77F4F;
+
+  --gold-bright: #F2B441;     /* NEW — celebratory completion fill */
+  --gold-soft:   #FCE7B5;
+
+  --clay:        #B85C38;     /* unchanged — important moments */
+  --sage:        #5F7A5C;     /* DEEPENED from #7A8B6F — stronger "done" */
+  --sage-soft:   #C7D3BC;
+  --highlight:   #F4D35E;     /* genuine highlighter yellow */
+
+  /* Subject color-coding (DEV-005, slightly punchier in v2.1) */
+  --subj-chem:   #5F7A5C;     /* sage */
+  --subj-bio:    #4F8A6F;     /* sage-teal */
+  --subj-kis:    #F0A878;     /* peach */
+  --subj-ict:    #6F92B8;     /* soft blue, slightly deeper */
+  --subj-hist:   #B85C38;     /* clay */
+  --subj-math:   #8C76B3;     /* lavender */
+  --subj-eng:    #C9A55C;     /* warm gold */
+  --subj-all:    #4A4239;     /* generic = ink-2 */
+
+  /* Radii */
+  --r-sm: 8px;
+  --r:    12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-2xl: 24px;
+
+  /* Reading measure (DEV-008 — slightly wider for comfort) */
+  --measure: 66ch;
+
+  /* Layout constants (DEV-007) */
+  --sidenav-w: 240px;
+  --rail-w:    260px;
+}
+
+[data-theme="dark"] {
+  --cream:       #14110D;
+  --cream-2:     #1F1B15;
+  --cream-3:     #2C261D;
+  --paper:       #1A1612;
+  --ink:         #F2EBD8;
+  --ink-2:       #C2BAA8;
+  --ink-3:       #7B7568;
+  --line:        rgba(242, 235, 216, 0.10);
+  --line-2:      rgba(242, 235, 216, 0.05);
+}
+
+/* Tailwind v4 bridge */
+@theme inline {
+  --color-cream:        var(--cream);
+  --color-cream-2:      var(--cream-2);
+  --color-cream-3:      var(--cream-3);
+  --color-paper:        var(--paper);
+  --color-ink:          var(--ink);
+  --color-ink-2:        var(--ink-2);
+  --color-ink-3:        var(--ink-3);
+  --color-line:         var(--line);
+  --color-coral:        var(--coral);
+  --color-coral-soft:   var(--coral-soft);
+  --color-coral-deep:   var(--coral-deep);
+  --color-peach:        var(--peach);
+  --color-peach-soft:   var(--peach-soft);
+  --color-peach-deep:   var(--peach-deep);
+  --color-gold-bright:  var(--gold-bright);
+  --color-gold-soft:    var(--gold-soft);
+  --color-clay:         var(--clay);
+  --color-sage:         var(--sage);
+  --color-sage-soft:    var(--sage-soft);
+  --color-highlight:    var(--highlight);
+
+  --font-sans:  var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), "New York", "Source Serif 4", Georgia, serif;
+  --font-mono:  var(--font-jetbrains), "SF Mono", ui-monospace, monospace;
+
+  --radius-sm:  var(--r-sm);
+  --radius:     var(--r);
+  --radius-lg:  var(--r-lg);
+  --radius-xl:  var(--r-xl);
+  --radius-2xl: var(--r-2xl);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Base
+   ───────────────────────────────────────────────────────────── */
+
+* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+html, body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--coral);
+  color: white;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* ─────────────────────────────────────────────────────────────
+   Liquid glass (DEV-010 — refined: more blur, brighter highlight)
+   ───────────────────────────────────────────────────────────── */
+
+.glass {
+  background: color-mix(in srgb, var(--cream) 82%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  backdrop-filter: blur(28px) saturate(150%);
+  border-bottom: 0.5px solid var(--line);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -0.5px 0 rgba(255, 255, 255, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(26, 22, 18, 0.04);
+}
+.glass-bottom {
+  background: color-mix(in srgb, var(--cream) 82%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  backdrop-filter: blur(28px) saturate(150%);
+  border-top: 0.5px solid var(--line);
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.3),
+    0 -1px 2px rgba(0, 0, 0, 0.04),
+    0 -8px 24px rgba(26, 22, 18, 0.04);
+}
+
+/* For the desktop sidebar (DEV-007 + DEV-010) */
+.glass-side {
+  background: color-mix(in srgb, var(--cream) 85%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  backdrop-filter: blur(28px) saturate(150%);
+  border-right: 0.5px solid var(--line);
+  box-shadow:
+    inset -0.5px 0 0 rgba(255, 255, 255, 0.3),
+    inset 1px 0 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Buttons (DEV-002 + DEV-006: coral primary CTA pop)
+   ───────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 50px;
+  padding: 0 24px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.08s ease, background 0.16s ease, box-shadow 0.16s ease;
+  font-family: inherit;
+}
+.btn:active { transform: scale(0.97); }
+
+/* Primary = coral (DEV-006) — the "do this now" button */
+.btn-primary {
+  background: var(--coral);
+  color: white;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 6px 16px rgba(226, 90, 53, 0.28);
+}
+.btn-primary:hover { background: var(--coral-deep); }
+
+/* Peach for secondary-but-prominent actions */
+.btn-peach {
+  background: var(--peach);
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(199, 127, 79, 0.18);
+}
+.btn-peach:hover { background: var(--peach-deep); color: white; }
+
+.btn-secondary {
+  background: var(--cream-2);
+  color: var(--ink);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.btn-secondary:hover { background: var(--cream-3); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+}
+.btn-ghost:hover { background: var(--cream-2); }
+
+/* ─────────────────────────────────────────────────────────────
+   Cards
+   ───────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--paper);
+  border-radius: var(--r-lg);
+  border: 0.5px solid var(--line);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 8px 24px rgba(26, 22, 18, 0.05);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Reading surface — Brief body (DEV-008 readability bumps)
+   ───────────────────────────────────────────────────────────── */
+
+.prose-brief {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 18.5px;
+  line-height: 1.7;
+  color: var(--ink);
+  max-width: var(--measure);
+  font-variation-settings: "SOFT" 60, "WONK" 0, "opsz" 14;
+}
+.prose-brief p + p { margin-top: 1.15em; }
+.prose-brief em { font-style: italic; }
+.prose-brief strong { font-weight: 600; color: var(--ink); }
+
+/* Highlighted pull-quote */
+.highlight-quote {
+  background: var(--peach-soft);
+  border-radius: var(--r);
+  padding: 20px 22px;
+  margin: 26px 0;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--ink);
+  font-weight: 500;
+  font-variation-settings: "SOFT" 80, "opsz" 18;
+  border-left: 4px solid var(--coral);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Subject color-coding (DEV-005)
+   Add data-subj="chem|bio|kis|ict|hist|math|eng|all" to set --subj
+   ───────────────────────────────────────────────────────────── */
+
+[data-subj="chem"] { --subj: var(--subj-chem); }
+[data-subj="bio"]  { --subj: var(--subj-bio); }
+[data-subj="kis"]  { --subj: var(--subj-kis); }
+[data-subj="ict"]  { --subj: var(--subj-ict); }
+[data-subj="hist"] { --subj: var(--subj-hist); }
+[data-subj="math"] { --subj: var(--subj-math); }
+[data-subj="eng"]  { --subj: var(--subj-eng); }
+[data-subj="all"]  { --subj: var(--subj-all); }
+
+.subj-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--subj, var(--ink-3));
+  flex-shrink: 0;
+}
+
+.subj-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--subj, var(--ink-3)) 16%, var(--cream));
+  color: color-mix(in srgb, var(--subj, var(--ink)) 75%, var(--ink));
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.subj-chip .subj-dot { width: 6px; height: 6px; }
+
+/* ─────────────────────────────────────────────────────────────
+   Tags (the "Start here" coral pop, DEV-006)
+   ───────────────────────────────────────────────────────────── */
+
+.tag-coral {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--coral);
+  color: white;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(226, 90, 53, 0.25);
+}
+
+.tag-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cream-2);
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Desktop layout helpers (DEV-007)
+   Mobile = same as before. ≥ 1024px = sidebar + main + optional rail.
+   ───────────────────────────────────────────────────────────── */
+
+.app-shell {
+  min-height: 100dvh;
+  background: var(--cream);
+}
+
+@media (min-width: 1024px) {
+  .app-shell {
+    display: grid;
+    grid-template-columns: var(--sidenav-w) 1fr;
+  }
+  .app-shell-main {
+    min-width: 0;
+    min-height: 100dvh;
+  }
+  /* Hide bottom tab bar on desktop */
+  .tabbar-mobile-only { display: none !important; }
+}
+@media (max-width: 1023.99px) {
+  /* Hide desktop sidebar on mobile */
+  .sidenav-desktop-only { display: none !important; }
+}
