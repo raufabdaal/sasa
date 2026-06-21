@@ -26,6 +26,8 @@ const CANDIDATE_DIRS = [
 ];
 
 function resolveContentDir(): string {
+  // Note: dynamic-looking paths are intentional. We try a few candidate
+  // locations because the build sandbox layout varies (local vs Vercel).
   for (const dir of CANDIDATE_DIRS) {
     if (fs.existsSync(dir)) return dir;
   }
